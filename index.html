@@ -21,6 +21,18 @@
     --chip-active-bg:#1f6f5c;
     --chip-active-text:#f4f2ec;
     --shadow: 0 1px 2px rgba(30,28,20,0.06);
+    --status-lead-bg:#e4ede9;
+    --status-lead-text:#1f6f5c;
+    --status-emerging-bg:#f3e8d2;
+    --status-emerging-text:#9a6a14;
+    --status-cooling-bg:#e9e6da;
+    --status-cooling-text:#7a7562;
+    --status-dead-bg:#ece3e1;
+    --status-dead-text:#8a5a52;
+    --impact-good-bg:#e2eee2;
+    --impact-good-text:#3a7d4a;
+    --impact-bad-bg:#f2e2df;
+    --impact-bad-text:#a2503f;
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
@@ -38,6 +50,18 @@
       --chip-active-bg:#5fcbab;
       --chip-active-text:#0f1513;
       --shadow: 0 1px 3px rgba(0,0,0,0.4);
+      --status-lead-bg:#1c3630;
+      --status-lead-text:#7fe0c0;
+      --status-emerging-bg:#3a331b;
+      --status-emerging-text:#e0b768;
+      --status-cooling-bg:#2c2f30;
+      --status-cooling-text:#a4a094;
+      --status-dead-bg:#382a28;
+      --status-dead-text:#d68f83;
+      --impact-good-bg:#1f3626;
+      --impact-good-text:#7fce93;
+      --impact-bad-bg:#3a2a25;
+      --impact-bad-text:#e0917f;
     }
   }
   :root[data-theme="dark"]{
@@ -55,6 +79,18 @@
     --chip-active-bg:#5fcbab;
     --chip-active-text:#0f1513;
     --shadow: 0 1px 3px rgba(0,0,0,0.4);
+    --status-lead-bg:#1c3630;
+    --status-lead-text:#7fe0c0;
+    --status-emerging-bg:#3a331b;
+    --status-emerging-text:#e0b768;
+    --status-cooling-bg:#2c2f30;
+    --status-cooling-text:#a4a094;
+    --status-dead-bg:#382a28;
+    --status-dead-text:#d68f83;
+    --impact-good-bg:#1f3626;
+    --impact-good-text:#7fce93;
+    --impact-bad-bg:#3a2a25;
+    --impact-bad-text:#e0917f;
   }
 
   *{box-sizing:border-box;}
@@ -72,14 +108,6 @@
   .wrap{max-width:920px; margin:0 auto;}
 
   header.page{margin-bottom:22px;}
-  .eyebrow{
-    font-family:"IBM Plex Mono", monospace;
-    font-size:11px;
-    letter-spacing:.14em;
-    text-transform:uppercase;
-    color:var(--text-faint);
-    margin:0 0 8px;
-  }
   h1{
     font-size:clamp(24px,4.5vw,32px);
     line-height:1.2;
@@ -103,7 +131,6 @@
     border:1px solid var(--border);
     border-radius:10px;
     padding:3px;
-    margin-top:20px;
     width:fit-content;
   }
   .view-toggle button{
@@ -125,76 +152,169 @@
   }
   .view-toggle button:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
 
-  /* theme filter chips — floats in the corner, stacked under the add-toggle button */
-  .theme-filter{
-    position:fixed;
-    top:calc(16px + env(safe-area-inset-top, 0px) + 46px);
-    right:16px;
-    z-index:29;
-    max-width:min(320px, calc(100vw - 32px));
-  }
-  .theme-filter-toggle{
-    display:flex;
-    align-items:center;
-    gap:6px;
-    appearance:none;
-    border:1px solid var(--border);
-    background:var(--surface);
-    color:var(--text-dim);
-    font-family:inherit;
-    font-size:12.5px;
-    font-weight:600;
-    padding:8px 12px;
-    border-radius:9px;
-    cursor:pointer;
-    box-shadow:var(--shadow);
-  }
-  .theme-filter-toggle:hover{color:var(--text); border-color:var(--accent);}
-  .theme-filter-toggle:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
-  .theme-filter-toggle .label{
-    font-family:"IBM Plex Mono", monospace;
-    letter-spacing:.06em;
-  }
-  .theme-filter-toggle .chev{width:12px; height:12px; color:var(--text-faint);}
-  .theme-filter-toggle.open .chev{transform:rotate(90deg);}
-  .chips{
-    display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;
+  /* theme picker (select + status/desc card) */
+  .theme-picker{
     background:var(--surface);
     border:1px solid var(--border);
     border-radius:12px;
-    padding:10px;
-    box-shadow:var(--shadow);
-    max-height:55vh;
-    overflow-y:auto;
+    padding:14px;
+    margin-top:12px;
+  }
+  #themeSelect{
+    font-family:inherit;
+    font-size:13px;
+    color:var(--text);
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:8px 10px;
+  }
+  .theme-info{
+    margin-top:14px;
+  }
+  .theme-edit-row{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:flex-start;
+    gap:10px;
+  }
+  .theme-status-accordion{
+    flex:0 0 auto;
+    min-width:150px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:var(--surface-2);
+    overflow:hidden;
+    align-self:flex-start;
+  }
+  .theme-status-head{
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    appearance:none;
+    border:none;
+    background:transparent;
+    color:var(--text);
+    font-family:"IBM Plex Mono", monospace;
+    font-size:11.5px;
+    font-weight:600;
+    padding:8px 10px;
+    cursor:pointer;
+  }
+  .theme-status-head:focus-visible{outline:2px solid var(--accent); outline-offset:-2px;}
+  .theme-status-head .chev{width:11px; height:11px; color:var(--text-faint); flex:none; transition:transform .16s ease;}
+  .theme-status-accordion.open .theme-status-head .chev{transform:rotate(90deg);}
+  .theme-status-head.status-lead{color:var(--status-lead-text);}
+  .theme-status-head.status-emerging{color:var(--status-emerging-text);}
+  .theme-status-head.status-cooling{color:var(--status-cooling-text);}
+  .theme-status-head.status-dead{color:var(--status-dead-text);}
+  .theme-status-body{
+    display:grid;
+    grid-template-rows:0fr;
+    transition:grid-template-rows .16s ease;
+  }
+  .theme-status-accordion.open .theme-status-body{grid-template-rows:1fr;}
+  .theme-status-body-inner{overflow:hidden;}
+  .theme-status-option{
+    display:block;
+    width:100%;
+    text-align:left;
+    appearance:none;
+    border:none;
+    border-top:1px solid var(--border);
+    background:var(--surface);
+    color:var(--text-dim);
+    font-family:"IBM Plex Mono", monospace;
+    font-size:11.5px;
+    font-weight:600;
+    padding:8px 10px;
+    cursor:pointer;
+  }
+  .theme-status-option:hover{background:var(--surface-2);}
+  .theme-status-option:focus-visible{outline:2px solid var(--accent); outline-offset:-2px;}
+  .theme-status-option.active[data-status="주도"]{background:var(--status-lead-bg); color:var(--status-lead-text);}
+  .theme-status-option.active[data-status="부상"]{background:var(--status-emerging-bg); color:var(--status-emerging-text);}
+  .theme-status-option.active[data-status="소강"]{background:var(--status-cooling-bg); color:var(--status-cooling-text);}
+  .theme-status-option.active[data-status="소멸"]{background:var(--status-dead-bg); color:var(--status-dead-text);}
+  .theme-firstseen-input{
+    flex:1 1 200px;
+    max-width:260px;
+    font-family:"IBM Plex Mono", monospace;
+    font-size:11.5px;
+    color:var(--text);
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:6px 10px;
+  }
+  .theme-firstseen-input::placeholder{color:var(--text-faint);}
+  .theme-firstseen-input:focus{outline:2px solid var(--accent); outline-offset:1px;}
+  .theme-desc{
+    font-size:13px;
+    color:var(--text-dim);
+    margin:8px 0 0;
+    line-height:1.6;
   }
 
-  @media (max-width:480px){
-    .theme-filter{
-      top:auto;
-      bottom:calc(16px + env(safe-area-inset-bottom, 0px) + 46px);
-      right:16px;
-    }
+  /* search box */
+  .top-row{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:10px;
+    margin-top:16px;
   }
-  .chip{
-    appearance:none;
-    border:1px solid var(--border);
-    background:var(--chip-bg);
-    color:var(--chip-text);
+  .search-box{
+    position:relative;
+    display:flex;
+    align-items:center;
+    flex:1 1 260px;
+    max-width:420px;
+  }
+  .search-icon{
+    position:absolute;
+    left:12px;
+    width:16px; height:16px;
+    color:var(--text-faint);
+    pointer-events:none;
+  }
+  .search-box input{
+    width:100%;
     font-family:inherit;
-    font-size:12.5px;
-    font-weight:500;
-    padding:6px 11px;
-    border-radius:999px;
+    font-size:14px;
+    color:var(--text);
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:10px 36px;
+  }
+  .search-box input:focus{outline:2px solid var(--accent); outline-offset:1px;}
+  .search-box input::placeholder{color:var(--text-faint);}
+  #searchClear{
+    position:absolute;
+    right:8px;
+    appearance:none;
+    border:none;
+    background:var(--chip-bg);
+    color:var(--text-faint);
+    width:20px; height:20px;
+    border-radius:50%;
+    font-size:11px;
     cursor:pointer;
-    white-space:nowrap;
+    display:flex; align-items:center; justify-content:center;
   }
-  .chip:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
-  .chip.active{
-    background:var(--chip-active-bg);
-    color:var(--chip-active-text);
-    border-color:var(--chip-active-bg);
+  #searchClear:hover{color:var(--text);}
+  .search-empty{
+    margin-top:24px;
+    font-size:13px;
+    color:var(--text-faint);
+    text-align:center;
+    padding:24px;
+    border:1px dashed var(--border);
+    border-radius:12px;
   }
-  .chip .count{opacity:.65; font-family:"IBM Plex Mono",monospace; font-size:11px; margin-left:3px;}
 
   /* accordion groups */
   .groups{margin-top:24px; display:flex; flex-direction:column; gap:8px;}
@@ -367,7 +487,6 @@
     gap:6px;
     transition:opacity .12s ease;
   }
-  .stock.dim{opacity:.32;}
   .stock-top{display:flex; align-items:baseline; gap:8px;}
   .ticker{
     font-family:"IBM Plex Mono", monospace;
@@ -392,11 +511,6 @@
     border-radius:5px;
     padding:1px 6px;
   }
-  .tag.hit{
-    color:var(--chip-active-bg);
-    border-color:var(--chip-active-bg);
-  }
-
   /* ETF section (sector-level, separate from individual stocks, collapsible) */
   .etf-section{
     border-top:1px solid var(--border);
@@ -474,10 +588,6 @@
 
   /* add-stock panel */
   .add-toggle{
-    position:fixed;
-    top:calc(16px + env(safe-area-inset-top, 0px));
-    right:16px;
-    z-index:30;
     display:flex;
     align-items:center;
     gap:6px;
@@ -491,18 +601,10 @@
     padding:9px 14px;
     border-radius:10px;
     cursor:pointer;
-    box-shadow:var(--shadow);
+    white-space:nowrap;
   }
   .add-toggle:hover{color:var(--text); border-color:var(--accent);}
   .add-toggle:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
-
-  @media (max-width:480px){
-    .add-toggle{
-      top:auto;
-      bottom:calc(16px + env(safe-area-inset-bottom, 0px));
-      right:16px;
-    }
-  }
 
   .add-panel{
     margin-top:10px;
@@ -603,6 +705,16 @@
     padding:0 5px;
     flex:none;
   }
+  .impact-badge{
+    font-size:10px;
+    font-family:"IBM Plex Mono", monospace;
+    font-weight:600;
+    border-radius:5px;
+    padding:0 5px;
+    flex:none;
+  }
+  .impact-badge.good{background:var(--impact-good-bg); color:var(--impact-good-text);}
+  .impact-badge.bad{background:var(--impact-bad-bg); color:var(--impact-bad-text);}
 
   @media (max-width:520px){
     .add-grid{grid-template-columns:1fr;}
@@ -626,25 +738,49 @@
 <body>
 <div class="wrap">
   <header class="page">
-    <p class="eyebrow" id="eyebrow">SECTOR COMPASS · US EQUITIES</p>
     <h1>주식 나침반</h1>
 
-    <div class="view-toggle" role="tablist" aria-label="보기" id="topTabs">
-      <button type="button" data-market="us" class="active" role="tab" aria-selected="true">미국 주식</button>
-      <button type="button" data-market="kr" role="tab" aria-selected="false">한국 주식</button>
-      <button type="button" data-mode="theme" role="tab" aria-selected="false">테마 보기</button>
+    <div class="top-row">
+      <div class="view-toggle" role="tablist" aria-label="보기" id="topTabs">
+        <button type="button" data-market="us" class="active" role="tab" aria-selected="true">미국 주식</button>
+        <button type="button" data-market="kr" role="tab" aria-selected="false">한국 주식</button>
+        <button type="button" data-mode="theme" role="tab" aria-selected="false">테마 보기</button>
+      </div>
+
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="6.5" stroke="currentColor" stroke-width="1.6"/><path d="M14 14l4.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <input type="text" id="searchInput" placeholder="티커나 종목명으로 검색 (예: NVDA, 삼성전자)" autocomplete="off">
+        <button type="button" id="searchClear" hidden aria-label="검색어 지우기">✕</button>
+      </div>
+
+      <button type="button" class="add-toggle" id="addToggle" aria-expanded="false">
+        ＋ 종목추가
+      </button>
     </div>
 
-    <div class="view-toggle" role="tablist" aria-label="테마" id="themeSubTabs" hidden>
-      <button type="button" data-theme="ai" class="active" role="tab" aria-selected="true">🤖 AI 밸류체인</button>
-      <button type="button" data-theme="battery" role="tab" aria-selected="false">🔋 2차전지 밸류체인</button>
-      <button type="button" data-theme="robot" role="tab" aria-selected="false">🦾 로봇·피지컬AI 밸류체인</button>
-      <button type="button" data-theme="nuclear" role="tab" aria-selected="false">⚛️ 원자력·전력 밸류체인</button>
+    <div class="theme-picker" id="themeSubTabs" hidden>
+      <select id="themeSelect"></select>
+      <div class="theme-info" id="themeInfo">
+        <div class="theme-edit-row">
+          <div class="theme-status-accordion" id="themeStatusAccordion">
+            <button type="button" class="theme-status-head" id="themeStatusHead" aria-expanded="false">
+              <span id="themeStatusLabel">상태 선택</span>
+              <svg class="chev" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="theme-status-body">
+              <div class="theme-status-body-inner" id="themeStatusOptions">
+                <button type="button" class="theme-status-option" data-status="부상">부상</button>
+                <button type="button" class="theme-status-option" data-status="주도">주도</button>
+                <button type="button" class="theme-status-option" data-status="소강">소강</button>
+                <button type="button" class="theme-status-option" data-status="소멸">소멸</button>
+              </div>
+            </div>
+          </div>
+          <input type="text" id="themeFirstSeenInput" class="theme-firstseen-input" placeholder="최초 부상 시기 메모 (예: 2025-08)">
+        </div>
+        <p class="theme-desc" id="themeDesc"></p>
+      </div>
     </div>
-
-    <button type="button" class="add-toggle" id="addToggle" aria-expanded="false">
-      ＋ 종목추가
-    </button>
 
     <form class="add-panel" id="addPanel" hidden>
       <h2>새 종목 추가</h2>
@@ -703,15 +839,9 @@
       </div>
     </form>
 
-    <div class="theme-filter">
-      <button type="button" class="theme-filter-toggle" id="themeFilterToggle" aria-expanded="false">
-        <span class="label">테마 태그 필터</span>
-        <svg class="chev" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
-      <div class="chips" id="chipRow" hidden></div>
-    </div>
   </header>
 
+  <p class="search-empty" id="searchEmpty" hidden>검색 결과가 없어요. 티커나 종목명을 다시 확인해보세요.</p>
   <div class="groups" id="groups"></div>
 
   <footer class="note">
@@ -758,13 +888,14 @@ const SECTORS_US = [
         {t:'FICO', kr:'페어아이작', en:'Fair Isaac Corporation', desc:'신용평가 점수(FICO스코어)와 분석 소프트웨어를 만드는 회사', tags:[]},
         {t:'FTNT', kr:'포티넷', en:'Fortinet', desc:'방화벽 등 네트워크 보안 솔루션을 만드는 회사', tags:['보안']},
         {t:'GEN', kr:'젠디지털', en:'Gen Digital', desc:'노턴·아바스트 등 개인용 보안 소프트웨어 브랜드를 보유한 회사', tags:['보안']},
+        {t:'CRWV', kr:'코어위브', en:'CoreWeave', desc:'AI 학습·추론용 GPU 클라우드 인프라를 임대하는 네오클라우드 회사', tags:['클라우드','AI인프라']},
+        {t:'NBIS', kr:'니비우스그룹', en:'Nebius Group', desc:'AI 기업 대상 GPU 클라우드 인프라를 임대하는 네오클라우드 회사', tags:['클라우드','AI인프라']},
       ]},
     ]},
     {kr:'기술 하드웨어·장비', en:'Technology Hardware & Equipment', industries:[
       {kr:'통신장비(시스코, 아리스타 등)', en:'Communications Equipment', companies:[
         {t:'CSCO', kr:'시스코', en:'Cisco Systems', desc:'기업·데이터센터용 네트워크 장비를 만드는 회사', tags:['AI인프라'], chains:{ai:'인프라'}},
         {t:'ANET', kr:'아리스타네트웍스', en:'Arista Networks', desc:'대규모 AI 데이터센터용 고속 네트워크 스위치 회사', tags:['AI인프라'], chains:{ai:'인프라'}},
-        {t:'JNPR', kr:'주니퍼네트웍스', en:'Juniper Networks', desc:'기업·통신사용 네트워크 장비를 만드는 회사', tags:['AI인프라']},
         {t:'MSI', kr:'모토로라솔루션즈', en:'Motorola Solutions', desc:'공공안전용 무선통신 장비를 만드는 회사', tags:[]},
         {t:'CIEN', kr:'시에나', en:'Ciena', desc:'광통신 네트워크 장비를 만드는 회사', tags:['AI인프라']},
         {t:'FFIV', kr:'F5', en:'F5, Inc.', desc:'애플리케이션 전달·보안을 담당하는 네트워크 장비 회사', tags:[]},
@@ -793,6 +924,8 @@ const SECTORS_US = [
         {t:'JBL', kr:'자빌', en:'Jabil', desc:'전자제품 위탁생산(EMS)을 전문으로 하는 회사', tags:[]},
         {t:'FLEX', kr:'플렉스', en:'Flex Ltd.', desc:'전자제품 위탁생산(EMS)을 전문으로 하는 회사', tags:[]},
         {t:'CDW', kr:'CDW', en:'CDW Corporation', desc:'기업·공공기관에 IT 제품·서비스를 유통하는 회사', tags:[]},
+        {t:'COHR', kr:'코히런트', en:'Coherent Corp.', desc:'데이터센터용 광통신 부품·레이저를 만드는 회사', tags:['AI인프라']},
+        {t:'LITE', kr:'루멘텀홀딩스', en:'Lumentum Holdings', desc:'데이터센터·통신망용 광통신 부품을 만드는 회사', tags:['AI인프라']},
       ]},
     ]},
     {kr:'반도체', en:'Semiconductors & Semiconductor Equipment', industries:[
@@ -813,6 +946,8 @@ const SECTORS_US = [
         {t:'ARM', kr:'ARM홀딩스', en:'Arm Holdings', desc:'스마트폰·서버용 반도체 설계 아키텍처를 라이선스하는 회사', tags:['반도체']},
         {t:'TSM', kr:'TSMC', en:'Taiwan Semiconductor Manufacturing', desc:'전 세계 최대 규모의 반도체 위탁생산(파운드리) 회사', tags:['AI하드웨어','반도체'], chains:{ai:'하드웨어'}},
         {t:'FSLR', kr:'퍼스트솔라', en:'First Solar', desc:'박막형 태양광 패널을 생산하는 미국 대표 태양광 회사', tags:[]},
+        {t:'IONQ', kr:'아이온큐', en:'IonQ', desc:'이온트랩 방식의 양자컴퓨터 하드웨어를 개발하는 퓨어플레이 회사', tags:[]},
+        {t:'RGTI', kr:'리게티컴퓨팅', en:'Rigetti Computing', desc:'초전도 방식의 양자컴퓨터 하드웨어를 개발하는 퓨어플레이 회사', tags:[]},
       ]},
       {kr:'반도체 장비·소재(어플라이드머티어리얼즈 등)', en:'Semiconductor Materials & Equipment', companies:[
         {t:'AMAT', kr:'어플라이드머티어리얼즈', en:'Applied Materials', desc:'반도체를 만드는 데 쓰이는 생산장비를 만드는 회사', tags:['반도체장비']},
@@ -867,7 +1002,6 @@ const SECTORS_US = [
       ]},
       {kr:'무선통신서비스(티모바일 등)', en:'Wireless Telecommunication Services', companies:[
         {t:'TMUS', kr:'티모바일', en:'T-Mobile US', desc:'5G 네트워크 중심의 이동통신 회사', tags:['인프라']},
-        {t:'USM', kr:'US셀룰러', en:'United States Cellular', desc:'미국 중소도시 중심의 지역 이동통신 회사', tags:[]},
         {t:'VOD', kr:'보다폰', en:'Vodafone', desc:'유럽·아프리카에 서비스하는 영국계 이동통신 회사(미국 상장 ADR)', tags:[]},
         {t:'AMX', kr:'아메리카모빌', en:'América Móvil', desc:'중남미 최대 이동통신 회사(미국 상장 ADR)', tags:[]},
         {t:'ORAN', kr:'오렌지', en:'Orange S.A.', desc:'프랑스 대표 이동통신 회사(미국 상장 ADR)', tags:[]},
@@ -1008,7 +1142,6 @@ const SECTORS_US = [
         {t:'GIS', kr:'제너럴밀스', en:'General Mills', desc:'시리얼 등 포장 식품을 만드는 회사', tags:[]},
         {t:'HSY', kr:'허쉬', en:'Hershey', desc:'미국 대표 초콜릿·제과 브랜드 회사', tags:[]},
         {t:'KHC', kr:'크래프트하인즈', en:'Kraft Heinz', desc:'케첩 등 가공식품을 만드는 대형 식품회사', tags:[]},
-        {t:'K', kr:'켈라노바', en:'Kellanova', desc:'시리얼·스낵을 만드는 식품회사', tags:[]},
         {t:'ADM', kr:'아처대니얼스미들랜드', en:'Archer-Daniels-Midland', desc:'곡물을 가공·유통하는 세계적 농산물 기업', tags:[]},
         {t:'BG', kr:'번지글로벌', en:'Bunge Global', desc:'곡물을 가공·유통하는 세계적 농산물 기업', tags:[]},
         {t:'TSN', kr:'타이슨푸드', en:'Tyson Foods', desc:'육류 가공·생산을 전문으로 하는 식품회사', tags:[]},
@@ -1022,7 +1155,6 @@ const SECTORS_US = [
         {t:'PM', kr:'필립모리스인터내셔널', en:'Philip Morris International', desc:'미국 외 지역의 담배·전자담배 제품 회사', tags:[]},
         {t:'MO', kr:'알트리아그룹', en:'Altria Group', desc:'미국 내 담배·니코틴 제품을 판매하는 회사', tags:[]},
         {t:'BTI', kr:'브리티시아메리칸토바코', en:'British American Tobacco', desc:'영국계 글로벌 담배회사(미국 상장 ADR)', tags:[]},
-        {t:'VGR', kr:'벡터그룹', en:'Vector Group', desc:'저가 담배 브랜드를 보유한 미국 담배회사', tags:[]},
         {t:'UVV', kr:'유니버설코퍼레이션', en:'Universal Corporation', desc:'담뱃잎을 유통하는 글로벌 원료 공급 회사', tags:[]},
       ]},
     ]},
@@ -1078,7 +1210,6 @@ const SECTORS_US = [
       {kr:'소비자금융(아메리칸익스프레스 등)', en:'Consumer Finance', companies:[
         {t:'AXP', kr:'아메리칸익스프레스', en:'American Express', desc:'프리미엄 신용카드·여행 서비스 회사', tags:[]},
         {t:'COF', kr:'캐피탈원파이낸셜', en:'Capital One Financial', desc:'신용카드·소비자대출 중심의 금융회사', tags:[]},
-        {t:'DFS', kr:'디스커버파이낸셜서비스', en:'Discover Financial Services', desc:'신용카드와 자체 결제 네트워크를 운영하는 회사', tags:[]},
         {t:'SYF', kr:'신크로니파이낸셜', en:'Synchrony Financial', desc:'매장 제휴 신용카드를 전문으로 하는 금융회사', tags:[]},
         {t:'ALLY', kr:'앨리파이낸셜', en:'Ally Financial', desc:'자동차 할부금융 중심의 디지털 금융회사', tags:[]},
         {t:'SOFI', kr:'소파이테크놀로지스', en:'SoFi Technologies', desc:'대출·은행 서비스를 제공하는 디지털 핀테크 회사', tags:[]},
@@ -1099,6 +1230,7 @@ const SECTORS_US = [
         {t:'NDAQ', kr:'나스닥', en:'Nasdaq, Inc.', desc:'나스닥 거래소를 운영하는 회사', tags:[]},
         {t:'MSCI', kr:'MSCI', en:'MSCI Inc.', desc:'글로벌 주가지수(MSCI지수)를 산출하는 금융정보 회사', tags:[]},
         {t:'COIN', kr:'코인베이스', en:'Coinbase', desc:'미국 대표 가상자산 거래소 운영회사', tags:[]},
+        {t:'CRCL', kr:'서클인터넷그룹', en:'Circle Internet Group', desc:'스테이블코인 USDC를 발행하는 핀테크 회사', tags:[]},
       ]},
     ]},
     {kr:'보험', en:'Insurance', industries:[
@@ -1208,6 +1340,7 @@ const SECTORS_US = [
         {t:'TDG', kr:'트랜스다임그룹', en:'TransDigm Group', desc:'항공기 부품을 설계·제조하는 회사', tags:[]},
         {t:'HWM', kr:'하우멧에어로스페이스', en:'Howmet Aerospace', desc:'항공기 엔진 부품을 만드는 회사', tags:[]},
         {t:'AXON', kr:'액손엔터프라이즈', en:'Axon Enterprise', desc:'테이저건·바디캠 등 공공안전 장비를 만드는 회사', tags:[]},
+        {t:'HII', kr:'헌팅턴잉걸스인더스트리스', en:'Huntington Ingalls Industries', desc:'미 해군 항공모함·잠수함을 건조하는 최대 군함 조선회사', tags:[]},
       ]},
       {kr:'건축제품(트레인테크놀로지스 등)', en:'Building Products', companies:[
         {t:'TT', kr:'트레인테크놀로지스', en:'Trane Technologies', desc:'냉난방공조(HVAC) 시스템을 만드는 회사', tags:[]},
@@ -1242,6 +1375,7 @@ const SECTORS_US = [
         {t:'AME', kr:'아메텍', en:'AMETEK', desc:'전자 계측·전기 장비를 만드는 회사', tags:[]},
         {t:'GEV', kr:'GE버노바', en:'GE Vernova', desc:'가스터빈·송배전 설비 등 발전·전력 인프라를 만드는 회사', tags:['AI인프라'], chains:{nuclear:'기자재·건설'}},
         {t:'HUBB', kr:'허벨', en:'Hubbell Incorporated', desc:'전력·유틸리티용 전기장비를 만드는 회사', tags:['AI인프라']},
+        {t:'BE', kr:'블룸에너지', en:'Bloom Energy', desc:'천연가스로 전기를 생산하는 고체산화물 연료전지를 만드는 회사', tags:['AI인프라']},
       ]},
       {kr:'산업 복합기업(허니웰, 3M 등)', en:'Industrial Conglomerates', companies:[
         {t:'HON', kr:'허니웰', en:'Honeywell', desc:'산업 자동화·항공전자 제품을 만드는 회사', tags:[]},
@@ -1416,6 +1550,8 @@ const SECTORS_US = [
         {t:'NRG', kr:'NRG에너지', en:'NRG Energy', desc:'발전·소매 전력판매를 함께 하는 독립전력 회사', tags:['AI인프라']},
         {t:'AES', kr:'AES코퍼레이션', en:'AES Corporation', desc:'신재생에너지 발전 비중이 큰 독립전력 회사', tags:[]},
         {t:'ORA', kr:'오맷테크놀로지스', en:'Ormat Technologies', desc:'지열발전 전문 신재생에너지 회사', tags:[]},
+        {t:'OKLO', kr:'오클로', en:'Oklo Inc.', desc:'소형모듈원자로(SMR)를 개발하는 차세대 원전 스타트업', tags:[]},
+        {t:'TLN', kr:'탤런에너지', en:'Talen Energy', desc:'원자력 발전소를 보유하고 AI 데이터센터에 직접 전력을 판매하는 독립발전사', tags:['AI인프라']},
       ]},
       {kr:'수도(아메리칸워터웍스 등)', en:'Water Utilities', companies:[
         {t:'AWK', kr:'아메리칸워터웍스', en:'American Water Works', desc:'미국 최대 규모의 상수도 유틸리티 회사', tags:[]},
@@ -1541,6 +1677,8 @@ const SECTORS_KR = [
         {t:'006400', kr:'삼성SDI', en:'Samsung SDI', desc:'전기차·ESS용 배터리 셀을 만드는 국내 대표 배터리 회사', tags:[], chains:{battery:'셀 제조'}},
         {t:'034220', kr:'LG디스플레이', en:'LG Display', desc:'OLED 등 디스플레이 패널을 만드는 회사', tags:[]},
         {t:'007660', kr:'이수페타시스', en:'ISU Petasys', desc:'AI 서버용 다층 인쇄회로기판(MLB)을 만드는 회사', tags:['AI하드웨어']},
+        {t:'010170', kr:'대한광통신', en:'Daehan Fiber Optics', desc:'광섬유·광케이블을 생산하는 국내 대표 광통신 소재 회사', tags:[]},
+        {t:'178320', kr:'서진시스템', en:'Seojin System', desc:'반도체·2차전지·로봇용 정밀 부품을 가공하는 회사', tags:[]},
       ]},
     ]},
   ]},
@@ -1555,7 +1693,6 @@ const SECTORS_KR = [
         {t:'035720', kr:'카카오', en:'Kakao', desc:'카카오톡을 중심으로 메신저·콘텐츠·핀테크를 운영하는 회사', tags:['AI소프트웨어']},
         {t:'067160', kr:'숲(SOOP)', en:'SOOP', desc:'실시간 인터넷 방송(옛 아프리카TV)을 운영하는 플랫폼 회사', tags:[]},
         {t:'376300', kr:'디어유', en:'Dear U', desc:'팬과 아이돌을 잇는 팬덤 플랫폼 \'버블\'을 운영하는 회사', tags:[]},
-        {t:'205100', kr:'커넥트웨이브', en:'Connectwave', desc:'다나와 등 가격비교·이커머스 플랫폼을 운영하는 회사', tags:[]},
       ]},
       {kr:'미디어(제일기획 등)', en:'Media', companies:[
         {t:'030000', kr:'제일기획', en:'Cheil Worldwide', desc:'삼성그룹 계열의 국내 대표 광고대행사', tags:[]},
@@ -1638,6 +1775,7 @@ const SECTORS_KR = [
         {t:'004170', kr:'신세계', en:'Shinsegae', desc:'백화점을 중심으로 하는 국내 대표 유통회사', tags:[]},
         {t:'069960', kr:'현대백화점', en:'Hyundai Department Store', desc:'백화점을 중심으로 하는 유통회사', tags:[]},
         {t:'071840', kr:'롯데하이마트', en:'Lotte Hi-Mart', desc:'가전제품 전문 유통 체인 회사', tags:[]},
+        {t:'257720', kr:'실리콘투', en:'SILICON2', desc:'K-뷰티 제품을 해외로 역직구 유통하는 플랫폼 회사', tags:[]},
       ]},
     ]},
   ]},
@@ -1741,6 +1879,8 @@ const SECTORS_KR = [
         {t:'298380', kr:'에이비엘바이오', en:'ABL Bio', desc:'이중항체 기반 항암·퇴행성뇌질환 치료제를 개발하는 바이오 회사', tags:[]},
         {t:'006280', kr:'녹십자', en:'GC Corporation (Green Cross)', desc:'백신·혈액제제를 만드는 국내 대표 제약·바이오 회사', tags:[]},
         {t:'302440', kr:'SK바이오사이언스', en:'SK Bioscience', desc:'백신을 개발·생산하는 바이오 회사', tags:[]},
+        {t:'087010', kr:'펩트론', en:'Peptron', desc:'약효 지속형 방출 플랫폼 기술을 보유해 GLP-1 비만치료제 기술수출로 주목받는 바이오텍', tags:[]},
+        {t:'347850', kr:'디앤디파마텍', en:'D&D Pharmatech', desc:'GLP-1 계열 경구용 비만치료제를 개발하는 바이오텍', tags:[]},
       ]},
       {kr:'제약(유한양행 등)', en:'Pharmaceuticals', companies:[
         {t:'000100', kr:'유한양행', en:'Yuhan Corporation', desc:'국내 대표 제약회사 중 하나', tags:[]},
@@ -1755,7 +1895,6 @@ const SECTORS_KR = [
     ]},
     {kr:'헬스케어 장비·서비스', en:'Health Care Equipment & Services', industries:[
       {kr:'헬스케어 장비·용품(오스템임플란트 등)', en:'Health Care Equipment & Supplies', companies:[
-        {t:'048260', kr:'오스템임플란트', en:'Osstem Implant', desc:'치과 임플란트를 만드는 의료기기 회사', tags:[]},
         {t:'145020', kr:'휴젤', en:'Hugel', desc:'보툴리눔톡신·필러 등 미용 의료제품을 만드는 회사', tags:[]},
         {t:'214150', kr:'클래시스', en:'Classys', desc:'피부미용 의료기기를 만드는 회사', tags:[]},
         {t:'099190', kr:'아이센스', en:'i-SENS', desc:'혈당측정기 등 진단 의료기기를 만드는 회사', tags:[]},
@@ -1781,6 +1920,8 @@ const SECTORS_KR = [
         {t:'082740', kr:'한화엔진', en:'Hanwha Engine', desc:'선박용 엔진을 만드는 회사', tags:[]},
         {t:'241560', kr:'두산밥캣', en:'Doosan Bobcat', desc:'소형 건설장비를 만드는 회사', tags:[]},
         {t:'017800', kr:'현대엘리베이터', en:'Hyundai Elevator', desc:'엘리베이터·에스컬레이터를 만드는 회사', tags:[]},
+        {t:'083650', kr:'비에이치아이', en:'BHI Co.', desc:'발전소용 열교환기·보일러 기자재를 만드는 회사', tags:[]},
+        {t:'058610', kr:'에스피지', en:'SPG', desc:'로봇·자동화 기기에 쓰이는 감속기·모터를 만드는 회사', tags:['피지컬AI','로봇']},
       ]},
       {kr:'항공우주·방위(한화에어로스페이스 등)', en:'Aerospace & Defense', companies:[
         {t:'012450', kr:'한화에어로스페이스', en:'Hanwha Aerospace', desc:'항공엔진과 방산 무기체계를 만드는 회사', tags:[]},
@@ -1788,6 +1929,7 @@ const SECTORS_KR = [
         {t:'047810', kr:'한국항공우주산업', en:'Korea Aerospace Industries', desc:'전투기·헬기를 만드는 국내 대표 항공우주 회사', tags:[]},
         {t:'272210', kr:'한화시스템', en:'Hanwha Systems', desc:'방산 전자체계·레이더를 만드는 회사', tags:[]},
         {t:'064350', kr:'현대로템', en:'Hyundai Rotem', desc:'전차 등 지상무기체계와 철도차량을 만드는 회사', tags:[]},
+        {t:'489790', kr:'한화비전', en:'Hanwha Vision', desc:'AI 영상분석 기반 CCTV·영상보안 장비를 만드는 회사', tags:['AI소프트웨어']},
       ]},
       {kr:'전기장비(LS ELECTRIC 등)', en:'Electrical Equipment', companies:[
         {t:'010120', kr:'LS ELECTRIC', en:'LS Electric', desc:'전력기기·자동화 설비를 만드는 전기장비 회사', tags:['AI인프라']},
@@ -1798,6 +1940,7 @@ const SECTORS_KR = [
         {t:'373220', kr:'LG에너지솔루션', en:'LG Energy Solution', desc:'전기차·ESS용 배터리 셀을 만드는 국내 대표 배터리 회사', tags:[], chains:{battery:'셀 제조'}},
         {t:'112610', kr:'씨에스윈드', en:'CS Wind', desc:'풍력발전용 타워를 생산하는 풍력 부품회사', tags:[]},
         {t:'336260', kr:'두산퓨얼셀', en:'Doosan Fuel Cell', desc:'발전용 연료전지를 만드는 회사', tags:[]},
+        {t:'000500', kr:'가온전선', en:'Gaon Cable', desc:'전력케이블·해저케이블을 생산하는 전선 제조회사', tags:['AI인프라']},
       ]},
       {kr:'복합기업(삼성물산, SK 등)', en:'Industrial Conglomerates', companies:[
         {t:'028260', kr:'삼성물산', en:'Samsung C&T', desc:'건설·상사·패션·바이오 등을 아우르는 삼성그룹 핵심 회사', tags:[]},
@@ -1835,7 +1978,7 @@ const SECTORS_KR = [
       {kr:'항공·해운(대한항공, HMM 등)', en:'Airlines & Marine', companies:[
         {t:'003490', kr:'대한항공', en:'Korean Air', desc:'국내 최대 규모의 항공사', tags:[]},
         {t:'011200', kr:'HMM', en:'HMM', desc:'컨테이너 해상운송을 전문으로 하는 국내 대표 해운회사', tags:[]},
-        {t:'020560', kr:'아시아나항공', en:'Asiana Airlines', desc:'국내 대형 항공사 중 하나', tags:[]},
+        {t:'020560', kr:'아시아나항공', en:'Asiana Airlines', desc:'대한항공과 2026년 말 합병을 앞둔 국내 대형 항공사', tags:[]},
         {t:'180640', kr:'한진칼', en:'Hanjin KAL', desc:'대한항공을 산하에 둔 지주회사', tags:[]},
         {t:'005880', kr:'대한해운', en:'Korea Line Corporation', desc:'벌크선 해상운송을 전문으로 하는 해운회사', tags:[]},
         {t:'089590', kr:'제주항공', en:'Jeju Air', desc:'국내 대표 저비용항공사(LCC)', tags:[]},
@@ -1930,42 +2073,312 @@ const SECTORS_KR = [
   ]},
 ];
 
-const THEMES = {
-  ai: {
-    label: '🤖 AI 밸류체인',
-    order: ['하드웨어','인프라','데이터센터','클라우드','AI모델·소프트웨어','응용·서비스','보안','피지컬AI'],
-    labelEn: {
-      '하드웨어':'Hardware', '인프라':'Infrastructure', '데이터센터':'Data Center',
-      '클라우드':'Cloud', 'AI모델·소프트웨어':'AI Model / Software', '응용·서비스':'Applications',
-      '보안':'Security', '피지컬AI':'Physical AI'
-    },
-  },
-  battery: {
-    label: '🔋 2차전지 밸류체인',
-    order: ['원재료','소재','셀 제조','완성차·ESS'],
-    labelEn: {'원재료':'Raw Materials','소재':'Battery Materials','셀 제조':'Cell Manufacturing','완성차·ESS':'EV & ESS'},
-  },
-  robot: {
-    label: '🦾 로봇·피지컬AI 밸류체인',
-    order: ['부품','로봇 제조','응용'],
-    labelEn: {'부품':'Components','로봇 제조':'Robot Manufacturing','응용':'Applications'},
-  },
-  nuclear: {
-    label: '⚛️ 원자력·전력 인프라 밸류체인',
-    order: ['연료','기자재·건설','발전·공급'],
-    labelEn: {'연료':'Fuel','기자재·건설':'Equipment & Construction','발전·공급':'Power Generation & Supply'},
-  },
-};
+const THEME_DEFS = [
+  {key:'ai_semi', label:'AI 반도체', desc:'AI 가속기 수요 지속, HBM·DRAM·NAND 공급 부족으로 메모리 슈퍼사이클', status:'', firstSeen:''},
+  {key:'ai_board', label:'AI 기판·부품', desc:'AI 서버용 고다층 PCB·FC-BGA·MLCC 수요 급증, 유리기판 상용화 기대', status:'', firstSeen:''},
+  {key:'ai_server_net', label:'AI 서버·네트워크', desc:'데이터센터 증설로 서버·스위치·광통신 수요 확대', status:'', firstSeen:''},
+  {key:'cloud_ai_infra', label:'클라우드·AI 인프라', desc:'하이퍼스케일러 설비투자(capex) 확대, 국내 소버린 AI·AI 데이터센터', status:'', firstSeen:''},
+  {key:'ai_software', label:'AI 소프트웨어', desc:'AI 수익화 수혜주와 AI 에이전트로 인한 SaaS·IT서비스 대체 우려가 엇갈림', status:'', firstSeen:''},
+  {key:'cybersecurity', label:'사이버보안', desc:'AI 확산에 따른 보안 수요, 국가 사이버안보 강화', status:'', firstSeen:''},
+  {key:'dc_power_cooling', label:'데이터센터 전력·냉각', desc:'AI 데이터센터 전력 부족 → 발전설비·전력관리·냉각·전력판매 수혜', status:'', firstSeen:''},
+  {key:'power_grid_equip', label:'전력망·전력기기', desc:'노후 전력망 교체·송전망 확충으로 변압기·전선 수출 호황', status:'', firstSeen:''},
+  {key:'nuclear', label:'원자력', desc:'미국 원전 확대 정책, 한미 원전 협력·대미 투자, SMR', status:'', firstSeen:''},
+  {key:'shipbuilding', label:'조선', desc:'MASGA(한미 조선협력), LNG선 발주, 미 해군 MRO', status:'', firstSeen:''},
+  {key:'defense', label:'방산', desc:'유럽 재무장, K-방산 수출, 미국 국방예산', status:'', firstSeen:''},
+  {key:'aerospace', label:'항공우주', desc:'항공기 엔진·부품 호황, 우주산업', status:'', firstSeen:''},
+  {key:'robot_humanoid', label:'로봇·휴머노이드', desc:'피지컬 AI, 휴머노이드 상용화 기대, 물류·공장 자동화', status:'', firstSeen:''},
+  {key:'autonomous', label:'자율주행', desc:'로보택시 상용화', status:'', firstSeen:''},
+  {key:'ess', label:'ESS', desc:'데이터센터·전력망용 ESS 수요로 2차전지 업종 모멘텀 재형성', status:'', firstSeen:''},
+  {key:'strategic_minerals', label:'전략광물·비철금속', desc:'중국 희토류 수출통제, 공급망 재편, 구리·금·은 가격 강세', status:'', firstSeen:''},
+  {key:'stablecoin', label:'스테이블코인·디지털자산', desc:'원화·달러 스테이블코인 제도화, 가상자산 제도권 편입', status:'', firstSeen:''},
+  {key:'value_up', label:'밸류업·자본시장', desc:'상법개정, 자사주 소각, 증시 거래대금 급증', status:'', firstSeen:''},
+  {key:'kculture', label:'K-컬처 수출', desc:'K-뷰티·K-푸드·K-콘텐츠 글로벌 확산', status:'', firstSeen:''},
+  {key:'inbound_tourism', label:'인바운드 관광', desc:'중국 단체관광객 무비자 입국, 방한 관광객 증가', status:'', firstSeen:''},
+  {key:'obesity_bio', label:'비만치료제·바이오 플랫폼', desc:'GLP-1 비만치료제 시장 확대, 국내 플랫폼 기술수출', status:'', firstSeen:''},
+  {key:'lng_gas', label:'천연가스·LNG', desc:'미국 LNG 수출 확대, 알래스카 LNG, 유가 상승', status:'', firstSeen:''},
+  {key:'quantum', label:'양자컴퓨팅', desc:'양자컴퓨터 상용화 로드맵 발표 (목록 내 순수 종목은 없음)', status:'', firstSeen:''},
+];
+
+const THEME_STOCKS = [
+  {theme:'ai_semi', stage:'AI 칩 설계(GPU·ASIC)', market:'us', t:'NVDA', impact:null},
+  {theme:'ai_semi', stage:'AI 칩 설계(GPU·ASIC)', market:'us', t:'AMD', impact:null},
+  {theme:'ai_semi', stage:'AI 칩 설계(GPU·ASIC)', market:'us', t:'AVGO', impact:null},
+  {theme:'ai_semi', stage:'AI 칩 설계(GPU·ASIC)', market:'us', t:'MRVL', impact:null},
+  {theme:'ai_semi', stage:'설계 IP', market:'us', t:'ARM', impact:null},
+  {theme:'ai_semi', stage:'파운드리', market:'us', t:'TSM', impact:null},
+  {theme:'ai_semi', stage:'파운드리', market:'us', t:'INTC', impact:null},
+  {theme:'ai_semi', stage:'메모리(HBM·DRAM)', market:'kr', t:'005930', impact:null},
+  {theme:'ai_semi', stage:'메모리(HBM·DRAM)', market:'kr', t:'000660', impact:null},
+  {theme:'ai_semi', stage:'메모리(HBM·DRAM)', market:'kr', t:'402340', impact:null},
+  {theme:'ai_semi', stage:'메모리(HBM·DRAM)', market:'us', t:'MU', impact:null},
+  {theme:'ai_semi', stage:'메모리(NAND·저장장치)', market:'us', t:'SNDK', impact:null},
+  {theme:'ai_semi', stage:'메모리(NAND·저장장치)', market:'us', t:'WDC', impact:null},
+  {theme:'ai_semi', stage:'메모리(NAND·저장장치)', market:'us', t:'STX', impact:null},
+  {theme:'ai_semi', stage:'전공정 장비', market:'us', t:'ASML', impact:null},
+  {theme:'ai_semi', stage:'전공정 장비', market:'us', t:'AMAT', impact:null},
+  {theme:'ai_semi', stage:'전공정 장비', market:'us', t:'LRCX', impact:null},
+  {theme:'ai_semi', stage:'전공정 장비', market:'us', t:'KLAC', impact:null},
+  {theme:'ai_semi', stage:'전공정 장비', market:'kr', t:'240810', impact:null},
+  {theme:'ai_semi', stage:'전공정 장비', market:'kr', t:'036930', impact:null},
+  {theme:'ai_semi', stage:'전공정 장비', market:'kr', t:'084370', impact:null},
+  {theme:'ai_semi', stage:'전공정 장비', market:'kr', t:'403870', impact:null},
+  {theme:'ai_semi', stage:'HBM·후공정 장비', market:'kr', t:'042700', impact:null},
+  {theme:'ai_semi', stage:'HBM·후공정 장비', market:'kr', t:'039030', impact:null},
+  {theme:'ai_semi', stage:'HBM·후공정 장비', market:'kr', t:'031980', impact:null},
+  {theme:'ai_semi', stage:'후공정(패키징·테스트 외주)', market:'kr', t:'067310', impact:null},
+  {theme:'ai_semi', stage:'테스트 장비·소켓', market:'us', t:'TER', impact:null},
+  {theme:'ai_semi', stage:'테스트 장비·소켓', market:'kr', t:'058470', impact:null},
+  {theme:'ai_semi', stage:'테스트 장비·소켓', market:'kr', t:'095340', impact:null},
+  {theme:'ai_semi', stage:'소재·부품', market:'us', t:'ENTG', impact:null},
+  {theme:'ai_semi', stage:'소재·부품', market:'kr', t:'357780', impact:null},
+  {theme:'ai_semi', stage:'소재·부품', market:'kr', t:'005290', impact:null},
+  {theme:'ai_semi', stage:'소재·부품', market:'kr', t:'064760', impact:null},
+  {theme:'ai_board', stage:'MLCC', market:'kr', t:'009150', impact:null},
+  {theme:'ai_board', stage:'반도체 기판(FC-BGA 등)', market:'kr', t:'009150', impact:null},
+  {theme:'ai_board', stage:'반도체 기판(FC-BGA 등)', market:'kr', t:'011070', impact:null},
+  {theme:'ai_board', stage:'반도체 기판(FC-BGA 등)', market:'kr', t:'222800', impact:null},
+  {theme:'ai_board', stage:'반도체 기판(FC-BGA 등)', market:'kr', t:'353200', impact:null},
+  {theme:'ai_board', stage:'고다층 PCB(서버·네트워크)', market:'kr', t:'007660', impact:null},
+  {theme:'ai_board', stage:'유리기판', market:'kr', t:'011790', impact:null},
+  {theme:'ai_board', stage:'커넥터·인터커넥트', market:'us', t:'APH', impact:null},
+  {theme:'ai_board', stage:'커넥터·인터커넥트', market:'us', t:'TEL', impact:null},
+  {theme:'ai_server_net', stage:'AI 서버', market:'us', t:'DELL', impact:null},
+  {theme:'ai_server_net', stage:'AI 서버', market:'us', t:'SMCI', impact:null},
+  {theme:'ai_server_net', stage:'AI 서버', market:'us', t:'HPE', impact:null},
+  {theme:'ai_server_net', stage:'서버 위탁생산', market:'us', t:'JBL', impact:null},
+  {theme:'ai_server_net', stage:'서버 위탁생산', market:'us', t:'FLEX', impact:null},
+  {theme:'ai_server_net', stage:'스토리지', market:'us', t:'PSTG', impact:null},
+  {theme:'ai_server_net', stage:'스토리지', market:'us', t:'NTAP', impact:null},
+  {theme:'ai_server_net', stage:'네트워크 스위치', market:'us', t:'ANET', impact:null},
+  {theme:'ai_server_net', stage:'네트워크 스위치', market:'us', t:'CSCO', impact:null},
+  {theme:'ai_server_net', stage:'광통신', market:'us', t:'CIEN', impact:null},
+  {theme:'ai_server_net', stage:'광통신', market:'us', t:'GLW', impact:null},
+  {theme:'cloud_ai_infra', stage:'하이퍼스케일러', market:'us', t:'MSFT', impact:null},
+  {theme:'cloud_ai_infra', stage:'하이퍼스케일러', market:'us', t:'AMZN', impact:null},
+  {theme:'cloud_ai_infra', stage:'하이퍼스케일러', market:'us', t:'GOOGL', impact:null},
+  {theme:'cloud_ai_infra', stage:'하이퍼스케일러', market:'us', t:'META', impact:null},
+  {theme:'cloud_ai_infra', stage:'하이퍼스케일러', market:'us', t:'ORCL', impact:null},
+  {theme:'cloud_ai_infra', stage:'국내 AI 데이터센터·소버린 AI', market:'kr', t:'035420', impact:null},
+  {theme:'cloud_ai_infra', stage:'국내 AI 데이터센터·소버린 AI', market:'kr', t:'017670', impact:null},
+  {theme:'cloud_ai_infra', stage:'국내 AI 데이터센터·소버린 AI', market:'kr', t:'030200', impact:null},
+  {theme:'cloud_ai_infra', stage:'국내 AI 데이터센터·소버린 AI', market:'kr', t:'018260', impact:null},
+  {theme:'ai_software', stage:'AI 수혜 소프트웨어', market:'us', t:'PLTR', impact:'수혜'},
+  {theme:'ai_software', stage:'AI 수혜 소프트웨어', market:'us', t:'APP', impact:'수혜'},
+  {theme:'ai_software', stage:'AI 수혜 소프트웨어', market:'us', t:'DDOG', impact:'수혜'},
+  {theme:'ai_software', stage:'AI 수혜 소프트웨어', market:'us', t:'NOW', impact:'수혜'},
+  {theme:'ai_software', stage:'AI 대체 우려(SaaS)', market:'us', t:'CRM', impact:'피해'},
+  {theme:'ai_software', stage:'AI 대체 우려(SaaS)', market:'us', t:'ADBE', impact:'피해'},
+  {theme:'ai_software', stage:'AI 대체 우려(SaaS)', market:'us', t:'WDAY', impact:'피해'},
+  {theme:'ai_software', stage:'AI 대체 우려(SaaS)', market:'us', t:'TEAM', impact:'피해'},
+  {theme:'ai_software', stage:'AI 대체 우려(SaaS)', market:'us', t:'INTU', impact:'피해'},
+  {theme:'ai_software', stage:'AI 대체 우려(IT서비스·리서치)', market:'us', t:'ACN', impact:'피해'},
+  {theme:'ai_software', stage:'AI 대체 우려(IT서비스·리서치)', market:'us', t:'CTSH', impact:'피해'},
+  {theme:'ai_software', stage:'AI 대체 우려(IT서비스·리서치)', market:'us', t:'INFY', impact:'피해'},
+  {theme:'ai_software', stage:'AI 대체 우려(IT서비스·리서치)', market:'us', t:'EPAM', impact:'피해'},
+  {theme:'ai_software', stage:'AI 대체 우려(IT서비스·리서치)', market:'us', t:'IT', impact:'피해'},
+  {theme:'cybersecurity', stage:'보안 플랫폼', market:'us', t:'CRWD', impact:null},
+  {theme:'cybersecurity', stage:'보안 플랫폼', market:'us', t:'PANW', impact:null},
+  {theme:'cybersecurity', stage:'보안 플랫폼', market:'us', t:'FTNT', impact:null},
+  {theme:'cybersecurity', stage:'보안 플랫폼', market:'kr', t:'053800', impact:null},
+  {theme:'dc_power_cooling', stage:'발전설비(가스터빈)', market:'us', t:'GEV', impact:null},
+  {theme:'dc_power_cooling', stage:'발전설비(가스터빈)', market:'kr', t:'034020', impact:null},
+  {theme:'dc_power_cooling', stage:'비상·자가발전기', market:'us', t:'CAT', impact:null},
+  {theme:'dc_power_cooling', stage:'비상·자가발전기', market:'us', t:'CMI', impact:null},
+  {theme:'dc_power_cooling', stage:'전력관리·배전', market:'us', t:'ETN', impact:null},
+  {theme:'dc_power_cooling', stage:'전력관리·배전', market:'us', t:'VRT', impact:null},
+  {theme:'dc_power_cooling', stage:'전력관리·배전', market:'us', t:'HUBB', impact:null},
+  {theme:'dc_power_cooling', stage:'냉각·공조', market:'us', t:'VRT', impact:null},
+  {theme:'dc_power_cooling', stage:'냉각·공조', market:'us', t:'TT', impact:null},
+  {theme:'dc_power_cooling', stage:'냉각·공조', market:'us', t:'JCI', impact:null},
+  {theme:'dc_power_cooling', stage:'전기·설비 시공', market:'us', t:'PWR', impact:null},
+  {theme:'dc_power_cooling', stage:'전기·설비 시공', market:'us', t:'EME', impact:null},
+  {theme:'dc_power_cooling', stage:'전력판매(독립발전사)', market:'us', t:'CEG', impact:null},
+  {theme:'dc_power_cooling', stage:'전력판매(독립발전사)', market:'us', t:'VST', impact:null},
+  {theme:'dc_power_cooling', stage:'전력판매(독립발전사)', market:'us', t:'NRG', impact:null},
+  {theme:'dc_power_cooling', stage:'데이터센터 리츠', market:'us', t:'EQIX', impact:null},
+  {theme:'dc_power_cooling', stage:'데이터센터 리츠', market:'us', t:'DLR', impact:null},
+  {theme:'power_grid_equip', stage:'변압기·차단기', market:'kr', t:'267260', impact:null},
+  {theme:'power_grid_equip', stage:'변압기·차단기', market:'kr', t:'298040', impact:null},
+  {theme:'power_grid_equip', stage:'변압기·차단기', market:'kr', t:'010120', impact:null},
+  {theme:'power_grid_equip', stage:'변압기·차단기', market:'kr', t:'103590', impact:null},
+  {theme:'power_grid_equip', stage:'전선·해저케이블', market:'kr', t:'001440', impact:null},
+  {theme:'power_grid_equip', stage:'전선·해저케이블', market:'kr', t:'006260', impact:null},
+  {theme:'power_grid_equip', stage:'전력망 설비', market:'us', t:'GEV', impact:null},
+  {theme:'power_grid_equip', stage:'전력망 설비', market:'us', t:'ETN', impact:null},
+  {theme:'power_grid_equip', stage:'송전망 투자 유틸리티', market:'us', t:'AEP', impact:null},
+  {theme:'nuclear', stage:'우라늄', market:'us', t:'CCJ', impact:null},
+  {theme:'nuclear', stage:'원자로·주기기', market:'kr', t:'034020', impact:null},
+  {theme:'nuclear', stage:'원자로·주기기', market:'us', t:'BWXT', impact:null},
+  {theme:'nuclear', stage:'원전 설계·정비', market:'kr', t:'052690', impact:null},
+  {theme:'nuclear', stage:'원전 설계·정비', market:'kr', t:'051600', impact:null},
+  {theme:'nuclear', stage:'원전 시공', market:'kr', t:'000720', impact:null},
+  {theme:'nuclear', stage:'원전 시공', market:'kr', t:'028260', impact:null},
+  {theme:'nuclear', stage:'원전 사업자(수출)', market:'kr', t:'015760', impact:null},
+  {theme:'nuclear', stage:'원전 운영·전력판매', market:'us', t:'CEG', impact:null},
+  {theme:'nuclear', stage:'원전 운영·전력판매', market:'us', t:'VST', impact:null},
+  {theme:'shipbuilding', stage:'조선소', market:'kr', t:'329180', impact:null},
+  {theme:'shipbuilding', stage:'조선소', market:'kr', t:'009540', impact:null},
+  {theme:'shipbuilding', stage:'조선소', market:'kr', t:'010140', impact:null},
+  {theme:'shipbuilding', stage:'조선소', market:'kr', t:'042660', impact:null},
+  {theme:'shipbuilding', stage:'조선소', market:'kr', t:'097230', impact:null},
+  {theme:'shipbuilding', stage:'선박엔진·기자재', market:'kr', t:'082740', impact:null},
+  {theme:'shipbuilding', stage:'미 해군 함정', market:'us', t:'GD', impact:null},
+  {theme:'defense', stage:'지상무기·탄약', market:'kr', t:'012450', impact:null},
+  {theme:'defense', stage:'지상무기·탄약', market:'kr', t:'064350', impact:null},
+  {theme:'defense', stage:'지상무기·탄약', market:'kr', t:'103140', impact:null},
+  {theme:'defense', stage:'유도무기·방산전자', market:'kr', t:'079550', impact:null},
+  {theme:'defense', stage:'유도무기·방산전자', market:'kr', t:'272210', impact:null},
+  {theme:'defense', stage:'군용기', market:'kr', t:'047810', impact:null},
+  {theme:'defense', stage:'미국 방산 대형주', market:'us', t:'LMT', impact:null},
+  {theme:'defense', stage:'미국 방산 대형주', market:'us', t:'NOC', impact:null},
+  {theme:'defense', stage:'미국 방산 대형주', market:'us', t:'RTX', impact:null},
+  {theme:'defense', stage:'미국 방산 대형주', market:'us', t:'GD', impact:null},
+  {theme:'defense', stage:'미국 방산 대형주', market:'us', t:'LHX', impact:null},
+  {theme:'defense', stage:'국방 소프트웨어', market:'us', t:'PLTR', impact:null},
+  {theme:'aerospace', stage:'항공기 엔진', market:'us', t:'GE', impact:null},
+  {theme:'aerospace', stage:'항공기 엔진', market:'kr', t:'012450', impact:null},
+  {theme:'aerospace', stage:'항공기 부품', market:'us', t:'HWM', impact:null},
+  {theme:'aerospace', stage:'항공기 부품', market:'us', t:'TDG', impact:null},
+  {theme:'aerospace', stage:'항공기 제조', market:'us', t:'BA', impact:null},
+  {theme:'aerospace', stage:'항공기 제조', market:'kr', t:'047810', impact:null},
+  {theme:'aerospace', stage:'위성·우주', market:'kr', t:'272210', impact:null},
+  {theme:'robot_humanoid', stage:'휴머노이드 개발', market:'us', t:'TSLA', impact:null},
+  {theme:'robot_humanoid', stage:'휴머노이드 개발', market:'kr', t:'005380', impact:null},
+  {theme:'robot_humanoid', stage:'로봇 완성품', market:'kr', t:'277810', impact:null},
+  {theme:'robot_humanoid', stage:'로봇 완성품', market:'kr', t:'454910', impact:null},
+  {theme:'robot_humanoid', stage:'로봇 완성품', market:'kr', t:'066570', impact:null},
+  {theme:'robot_humanoid', stage:'로봇 부품(액추에이터)', market:'kr', t:'012330', impact:null},
+  {theme:'robot_humanoid', stage:'물류·공장 자동화', market:'us', t:'SYM', impact:null},
+  {theme:'robot_humanoid', stage:'물류·공장 자동화', market:'us', t:'ROK', impact:null},
+  {theme:'autonomous', stage:'로보택시 개발', market:'us', t:'TSLA', impact:null},
+  {theme:'autonomous', stage:'로보택시 개발', market:'us', t:'GOOGL', impact:null},
+  {theme:'autonomous', stage:'차량호출 플랫폼', market:'us', t:'UBER', impact:null},
+  {theme:'autonomous', stage:'차량호출 플랫폼', market:'us', t:'LYFT', impact:null},
+  {theme:'autonomous', stage:'자율주행 부품·SW', market:'kr', t:'204320', impact:null},
+  {theme:'autonomous', stage:'자율주행 부품·SW', market:'kr', t:'307950', impact:null},
+  {theme:'ess', stage:'배터리 셀', market:'kr', t:'373220', impact:null},
+  {theme:'ess', stage:'배터리 셀', market:'kr', t:'006400', impact:null},
+  {theme:'ess', stage:'ESS 시스템', market:'us', t:'TSLA', impact:null},
+  {theme:'ess', stage:'양극재', market:'kr', t:'247540', impact:null},
+  {theme:'ess', stage:'양극재', market:'kr', t:'003670', impact:null},
+  {theme:'ess', stage:'양극재', market:'kr', t:'066970', impact:null},
+  {theme:'ess', stage:'동박', market:'kr', t:'020150', impact:null},
+  {theme:'ess', stage:'리튬', market:'us', t:'ALB', impact:null},
+  {theme:'strategic_minerals', stage:'희토류', market:'us', t:'MP', impact:null},
+  {theme:'strategic_minerals', stage:'제련·전략광물', market:'kr', t:'010130', impact:null},
+  {theme:'strategic_minerals', stage:'제련·전략광물', market:'kr', t:'000670', impact:null},
+  {theme:'strategic_minerals', stage:'구리', market:'us', t:'FCX', impact:null},
+  {theme:'strategic_minerals', stage:'구리', market:'us', t:'SCCO', impact:null},
+  {theme:'strategic_minerals', stage:'구리', market:'kr', t:'103140', impact:null},
+  {theme:'strategic_minerals', stage:'금', market:'us', t:'NEM', impact:null},
+  {theme:'strategic_minerals', stage:'알루미늄', market:'us', t:'AA', impact:null},
+  {theme:'stablecoin', stage:'국내 결제·핀테크', market:'kr', t:'377300', impact:null},
+  {theme:'stablecoin', stage:'국내 결제·핀테크', market:'kr', t:'323410', impact:null},
+  {theme:'stablecoin', stage:'국내 결제·핀테크', market:'kr', t:'035720', impact:null},
+  {theme:'stablecoin', stage:'국내 결제·핀테크', market:'kr', t:'035420', impact:null},
+  {theme:'stablecoin', stage:'가상자산 거래·중개', market:'us', t:'COIN', impact:null},
+  {theme:'stablecoin', stage:'가상자산 거래·중개', market:'us', t:'HOOD', impact:null},
+  {theme:'stablecoin', stage:'결제 네트워크', market:'us', t:'V', impact:null},
+  {theme:'stablecoin', stage:'결제 네트워크', market:'us', t:'MA', impact:null},
+  {theme:'stablecoin', stage:'결제 네트워크', market:'us', t:'PYPL', impact:null},
+  {theme:'stablecoin', stage:'결제 네트워크', market:'us', t:'XYZ', impact:null},
+  {theme:'value_up', stage:'증권', market:'kr', t:'006800', impact:null},
+  {theme:'value_up', stage:'증권', market:'kr', t:'039490', impact:null},
+  {theme:'value_up', stage:'증권', market:'kr', t:'071050', impact:null},
+  {theme:'value_up', stage:'증권', market:'kr', t:'016360', impact:null},
+  {theme:'value_up', stage:'증권', market:'kr', t:'005940', impact:null},
+  {theme:'value_up', stage:'지주사(자사주 소각)', market:'kr', t:'028260', impact:null},
+  {theme:'value_up', stage:'지주사(자사주 소각)', market:'kr', t:'034730', impact:null},
+  {theme:'value_up', stage:'지주사(자사주 소각)', market:'kr', t:'003550', impact:null},
+  {theme:'value_up', stage:'지주사(자사주 소각)', market:'kr', t:'000150', impact:null},
+  {theme:'value_up', stage:'지주사(자사주 소각)', market:'kr', t:'000880', impact:null},
+  {theme:'value_up', stage:'지주사(자사주 소각)', market:'kr', t:'001040', impact:null},
+  {theme:'value_up', stage:'고배당 금융지주', market:'kr', t:'105560', impact:null},
+  {theme:'value_up', stage:'고배당 금융지주', market:'kr', t:'055550', impact:null},
+  {theme:'value_up', stage:'고배당 금융지주', market:'kr', t:'086790', impact:null},
+  {theme:'value_up', stage:'고배당 금융지주', market:'kr', t:'316140', impact:null},
+  {theme:'value_up', stage:'고배당 금융지주', market:'kr', t:'138040', impact:null},
+  {theme:'kculture', stage:'K-뷰티 브랜드', market:'kr', t:'278470', impact:null},
+  {theme:'kculture', stage:'K-뷰티 브랜드', market:'kr', t:'090430', impact:null},
+  {theme:'kculture', stage:'K-뷰티 브랜드', market:'kr', t:'237880', impact:null},
+  {theme:'kculture', stage:'K-뷰티 ODM', market:'kr', t:'192820', impact:null},
+  {theme:'kculture', stage:'K-뷰티 ODM', market:'kr', t:'161890', impact:null},
+  {theme:'kculture', stage:'미용의료', market:'kr', t:'214150', impact:null},
+  {theme:'kculture', stage:'미용의료', market:'kr', t:'214450', impact:null},
+  {theme:'kculture', stage:'미용의료', market:'kr', t:'145020', impact:null},
+  {theme:'kculture', stage:'K-푸드', market:'kr', t:'003230', impact:null},
+  {theme:'kculture', stage:'K-푸드', market:'kr', t:'004370', impact:null},
+  {theme:'kculture', stage:'K-푸드', market:'kr', t:'271560', impact:null},
+  {theme:'kculture', stage:'K-푸드', market:'kr', t:'097950', impact:null},
+  {theme:'kculture', stage:'K-팝·엔터', market:'kr', t:'352820', impact:null},
+  {theme:'kculture', stage:'K-팝·엔터', market:'kr', t:'035900', impact:null},
+  {theme:'kculture', stage:'K-팝·엔터', market:'kr', t:'041510', impact:null},
+  {theme:'kculture', stage:'K-팝·엔터', market:'kr', t:'122870', impact:null},
+  {theme:'kculture', stage:'K-팝·엔터', market:'kr', t:'376300', impact:null},
+  {theme:'kculture', stage:'드라마·콘텐츠', market:'kr', t:'253450', impact:null},
+  {theme:'inbound_tourism', stage:'면세점', market:'kr', t:'008770', impact:null},
+  {theme:'inbound_tourism', stage:'카지노', market:'kr', t:'034230', impact:null},
+  {theme:'inbound_tourism', stage:'카지노', market:'kr', t:'114090', impact:null},
+  {theme:'inbound_tourism', stage:'카지노', market:'kr', t:'032350', impact:null},
+  {theme:'inbound_tourism', stage:'백화점', market:'kr', t:'069960', impact:null},
+  {theme:'inbound_tourism', stage:'백화점', market:'kr', t:'004170', impact:null},
+  {theme:'inbound_tourism', stage:'여행', market:'kr', t:'039130', impact:null},
+  {theme:'inbound_tourism', stage:'항공', market:'kr', t:'089590', impact:null},
+  {theme:'obesity_bio', stage:'GLP-1 비만치료제', market:'us', t:'LLY', impact:null},
+  {theme:'obesity_bio', stage:'GLP-1 비만치료제', market:'us', t:'NVO', impact:null},
+  {theme:'obesity_bio', stage:'GLP-1 비만치료제', market:'kr', t:'128940', impact:null},
+  {theme:'obesity_bio', stage:'플랫폼 기술수출', market:'kr', t:'196170', impact:null},
+  {theme:'obesity_bio', stage:'플랫폼 기술수출', market:'kr', t:'298380', impact:null},
+  {theme:'obesity_bio', stage:'플랫폼 기술수출', market:'kr', t:'141080', impact:null},
+  {theme:'obesity_bio', stage:'CDMO', market:'kr', t:'207940', impact:null},
+  {theme:'lng_gas', stage:'LNG 수출', market:'us', t:'LNG', impact:null},
+  {theme:'lng_gas', stage:'가스 파이프라인', market:'us', t:'KMI', impact:null},
+  {theme:'lng_gas', stage:'가스 파이프라인', market:'us', t:'WMB', impact:null},
+  {theme:'lng_gas', stage:'석유 메이저', market:'us', t:'XOM', impact:null},
+  {theme:'lng_gas', stage:'석유 메이저', market:'us', t:'CVX', impact:null},
+  {theme:'lng_gas', stage:'국내 LNG 도입·트레이딩', market:'kr', t:'036460', impact:null},
+  {theme:'lng_gas', stage:'국내 LNG 도입·트레이딩', market:'kr', t:'047050', impact:null},
+  {theme:'quantum', stage:'양자컴퓨터 개발(빅테크)', market:'us', t:'IBM', impact:null},
+  {theme:'quantum', stage:'양자컴퓨터 개발(빅테크)', market:'us', t:'GOOGL', impact:null},
+  {theme:'quantum', stage:'양자컴퓨터 개발(빅테크)', market:'us', t:'HON', impact:null},
+  {theme:'quantum', stage:'양자컴퓨터 개발(퓨어플레이)', market:'us', t:'IONQ', impact:null},
+  {theme:'quantum', stage:'양자컴퓨터 개발(퓨어플레이)', market:'us', t:'RGTI', impact:null},
+  {theme:'cloud_ai_infra', stage:'네오클라우드(AI GPU 임대)', market:'us', t:'CRWV', impact:null},
+  {theme:'cloud_ai_infra', stage:'네오클라우드(AI GPU 임대)', market:'us', t:'NBIS', impact:null},
+  {theme:'ai_server_net', stage:'광통신', market:'us', t:'COHR', impact:null},
+  {theme:'ai_server_net', stage:'광통신', market:'us', t:'LITE', impact:null},
+  {theme:'nuclear', stage:'SMR 개발', market:'us', t:'OKLO', impact:null},
+  {theme:'dc_power_cooling', stage:'연료전지 발전', market:'us', t:'BE', impact:null},
+  {theme:'stablecoin', stage:'스테이블코인 발행', market:'us', t:'CRCL', impact:null},
+  {theme:'dc_power_cooling', stage:'전력판매(독립발전사)', market:'us', t:'TLN', impact:null},
+  {theme:'shipbuilding', stage:'미 해군 함정', market:'us', t:'HII', impact:null},
+  {theme:'defense', stage:'방산 전자·영상보안', market:'kr', t:'489790', impact:null},
+  {theme:'ai_server_net', stage:'광통신', market:'kr', t:'010170', impact:null},
+  {theme:'power_grid_equip', stage:'전선·해저케이블', market:'kr', t:'000500', impact:null},
+  {theme:'nuclear', stage:'원자로·주기기', market:'kr', t:'083650', impact:null},
+  {theme:'robot_humanoid', stage:'로봇 부품(감속기·모터)', market:'kr', t:'058610', impact:null},
+  {theme:'robot_humanoid', stage:'로봇 부품(정밀가공)', market:'kr', t:'178320', impact:null},
+  {theme:'kculture', stage:'K-뷰티 유통', market:'kr', t:'257720', impact:null},
+  {theme:'obesity_bio', stage:'플랫폼 기술수출', market:'kr', t:'087010', impact:null},
+  {theme:'obesity_bio', stage:'GLP-1 비만치료제', market:'kr', t:'347850', impact:null},
+];
 
 const MARKETS = {
   us: {label:'US EQUITIES', data:SECTORS_US},
   kr: {label:'KR EQUITIES', data:SECTORS_KR},
 };
 
-let activeTags = new Set();
 let currentView = 'sector';
 let currentMarket = 'us';
-let currentTheme = 'ai';
+let currentTheme = 'ai_semi';
+let searchQuery = '';
+
+function companyMatches(c){
+  const q = searchQuery;
+  return c.t.toLowerCase().includes(q) ||
+    c.kr.toLowerCase().includes(q) ||
+    (c.en || '').toLowerCase().includes(q);
+}
 
 function activeSectors(){
   return MARKETS[currentMarket].data;
@@ -1982,56 +2395,82 @@ function allCompaniesBothMarkets(){
   return Object.keys(MARKETS).flatMap(m => allCompanies(m));
 }
 
-function tagSourceCompanies(){
-  return currentView === 'sector' ? allCompanies(currentMarket) : allCompaniesBothMarkets();
-}
-
-function buildChainGroups(){
-  const theme = THEMES[currentTheme];
-  const comps = allCompaniesBothMarkets().filter(c => c.chains && c.chains[currentTheme]);
+function buildThemeGroups(themeKey){
+  const rows = THEME_STOCKS.filter(r => r.theme === themeKey);
+  const order = [];
   const map = {};
-  theme.order.forEach(k => map[k] = []);
-  comps.forEach(c => map[c.chains[currentTheme]].push(c));
-  return theme.order.filter(k => map[k].length).map(k => ({
-    id:'chain-'+k, kr:k, en:theme.labelEn[k], color:'#1f6f5c', companies:map[k]
-  }));
-}
-
-function allTags(){
-  const counts = {};
-  tagSourceCompanies().forEach(c => c.tags.forEach(t => counts[t] = (counts[t]||0)+1));
-  return Object.entries(counts).sort((a,b)=> b[1]-a[1]);
-}
-
-function renderChips(){
-  const row = document.getElementById('chipRow');
-  row.innerHTML = '';
-  allTags().forEach(([tag,count]) => {
-    const btn = document.createElement('button');
-    btn.className = 'chip' + (activeTags.has(tag) ? ' active' : '');
-    btn.type = 'button';
-    btn.innerHTML = '#'+tag+' <span class="count">'+count+'</span>';
-    btn.addEventListener('click', () => {
-      if(activeTags.has(tag)) activeTags.delete(tag); else activeTags.add(tag);
-      renderChips();
-      renderGroups(false);
-    });
-    row.appendChild(btn);
+  rows.forEach(r => {
+    const c = tickerIndex[r.market + ':' + r.t];
+    if(!c) return; // ticker not found (removed/typo) — skip silently
+    if(!map[r.stage]){ map[r.stage] = []; order.push(r.stage); }
+    map[r.stage].push({...c, market:r.market, impact:r.impact});
   });
+  return order.map(stage => ({id:'theme-'+stage, kr:stage, en:'', color:'#1f6f5c', companies:map[stage]}));
+}
+
+function populateThemeSelect(){
+  const sel = document.getElementById('themeSelect');
+  if(!sel) return;
+  sel.innerHTML = THEME_DEFS.map(t => `<option value="${t.key}">${t.label}</option>`).join('');
+  sel.value = currentTheme;
+}
+
+/* ---- theme status/firstSeen: user-editable, stored in localStorage ---- */
+const THEME_OVERRIDE_KEY = 'sectorCompass_themeOverrides_v1';
+let themeOverrides = {};
+
+function loadThemeOverrides(){
+  try{
+    const raw = localStorage.getItem(THEME_OVERRIDE_KEY);
+    themeOverrides = raw ? JSON.parse(raw) : {};
+  }catch(e){ themeOverrides = {}; }
+}
+function saveThemeOverrides(){
+  try{ localStorage.setItem(THEME_OVERRIDE_KEY, JSON.stringify(themeOverrides)); }catch(e){}
+}
+function getThemeStatus(key){
+  return (themeOverrides[key] && themeOverrides[key].status) || '';
+}
+function getThemeFirstSeen(key){
+  return (themeOverrides[key] && themeOverrides[key].firstSeen) || '';
+}
+function setThemeOverride(key, patch){
+  themeOverrides[key] = {...(themeOverrides[key]||{}), ...patch};
+  saveThemeOverrides();
+}
+
+const STATUS_CLASS = {'주도':'lead', '부상':'emerging', '소강':'cooling', '소멸':'dead'};
+
+function renderThemeInfo(){
+  const def = THEME_DEFS.find(t => t.key === currentTheme);
+  if(!def) return;
+  const status = getThemeStatus(def.key);
+
+  document.querySelectorAll('.theme-status-option').forEach(b => {
+    b.classList.toggle('active', b.dataset.status === status);
+  });
+
+  const head = document.getElementById('themeStatusHead');
+  document.getElementById('themeStatusLabel').textContent = status || '상태 선택';
+  head.className = 'theme-status-head' + (STATUS_CLASS[status] ? ' status-' + STATUS_CLASS[status] : '');
+
+  document.getElementById('themeFirstSeenInput').value = getThemeFirstSeen(def.key);
+  document.getElementById('themeDesc').textContent = def.desc;
 }
 
 function stockCard(c){
-  const dim = activeTags.size > 0 && !c.tags.some(t => activeTags.has(t));
   const div = document.createElement('div');
-  div.className = 'stock' + (dim ? ' dim' : '') + (c.userAdded ? ' user-added' : '');
-  const tagsHtml = c.tags.map(t => '<span class="tag'+(activeTags.has(t)?' hit':'')+'">#'+t+'</span>').join('');
+  div.className = 'stock' + (c.userAdded ? ' user-added' : '');
+  const tagsHtml = c.tags.map(t => '<span class="tag">#'+t+'</span>').join('');
   const showMarket = currentView !== 'sector' && c.market;
   const marketHtml = showMarket ? `<span class="market-badge">${c.market === 'us' ? '미국' : '한국'}</span>` : '';
+  const impactHtml = c.impact ? `<span class="impact-badge ${c.impact === '수혜' ? 'good' : 'bad'}">${c.impact}</span>` : '';
   div.innerHTML = `
     <div class="stock-top">
       <span class="ticker mono">${c.t}</span>
       <span class="stock-name">${c.kr} <span class="en">${c.en||''}</span></span>
       ${marketHtml}
+      ${impactHtml}
       ${c.userAdded ? '<span class="user-badge">내 추가</span><button type="button" class="stock-remove" title="삭제">✕</button>' : ''}
     </div>
     <p class="stock-desc">${c.desc}</p>
@@ -2087,15 +2526,18 @@ function etfSectionEl(etfs){
 }
 
 function industryEl(ind){
+  const companies = searchQuery ? ind.companies.filter(companyMatches) : ind.companies;
+  if(searchQuery && companies.length === 0) return null;
+
   const wrap = document.createElement('div');
-  wrap.className = 'industry';
+  wrap.className = 'industry' + (searchQuery ? ' open' : '');
 
   const head = document.createElement('button');
   head.type = 'button';
   head.className = 'industry-head';
   head.innerHTML = `
     <span class="industry-name">${ind.kr} <span class="en">${ind.en}</span></span>
-    <span class="industry-count mono">${ind.companies.length}</span>
+    <span class="industry-count mono">${companies.length}</span>
     <svg class="chev" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
   `;
   head.addEventListener('click', () => wrap.classList.toggle('open'));
@@ -2106,7 +2548,7 @@ function industryEl(ind){
   inner.className = 'industry-body-inner';
   const stocks = document.createElement('div');
   stocks.className = 'stocks';
-  ind.companies.forEach(c => stocks.appendChild(stockCard(c)));
+  companies.forEach(c => stocks.appendChild(stockCard(c)));
   inner.appendChild(stocks);
   body.appendChild(inner);
 
@@ -2116,10 +2558,15 @@ function industryEl(ind){
 }
 
 function subgroupEl(sub, sectorColor){
+  const industryEls = sub.industries.map(industryEl).filter(Boolean);
+  if(searchQuery && industryEls.length === 0) return null;
+
+  const count = searchQuery
+    ? sub.industries.reduce((n,ind)=> n + ind.companies.filter(companyMatches).length, 0)
+    : sub.industries.reduce((n,ind)=> n+ind.companies.length, 0);
+
   const wrap = document.createElement('div');
   wrap.className = 'subgroup';
-
-  const count = sub.industries.reduce((n,ind)=> n+ind.companies.length, 0);
 
   const head = document.createElement('button');
   head.type = 'button';
@@ -2137,7 +2584,7 @@ function subgroupEl(sub, sectorColor){
   const inner = document.createElement('div');
   inner.className = 'subgroup-body-inner';
 
-  sub.industries.forEach(ind => inner.appendChild(industryEl(ind)));
+  industryEls.forEach(el => inner.appendChild(el));
 
   body.appendChild(inner);
   wrap.appendChild(head);
@@ -2146,12 +2593,25 @@ function subgroupEl(sub, sectorColor){
 }
 
 function groupEl(group, openDefault, nested){
+  let subEls = null;
+  let flatCompanies = null;
+
+  if(nested){
+    subEls = group.groups.map(sub => subgroupEl(sub, group.color)).filter(Boolean);
+    if(searchQuery && subEls.length === 0) return null;
+  } else {
+    flatCompanies = searchQuery ? group.companies.filter(companyMatches) : group.companies;
+    if(searchQuery && flatCompanies.length === 0) return null;
+  }
+
   const wrap = document.createElement('div');
-  wrap.className = 'group' + (openDefault ? ' open' : '');
+  wrap.className = 'group' + (openDefault || searchQuery ? ' open' : '');
 
   const count = nested
-    ? group.groups.reduce((n,g)=> n + g.industries.reduce((m,ind)=> m+ind.companies.length, 0), 0)
-    : group.companies.length;
+    ? (searchQuery
+        ? group.groups.reduce((n,g)=> n + g.industries.reduce((m,ind)=> m+ind.companies.filter(companyMatches).length, 0), 0)
+        : group.groups.reduce((n,g)=> n + g.industries.reduce((m,ind)=> m+ind.companies.length, 0), 0))
+    : flatCompanies.length;
 
   const head = document.createElement('button');
   head.type = 'button';
@@ -2172,12 +2632,12 @@ function groupEl(group, openDefault, nested){
   inner.className = 'group-body-inner';
 
   if(nested){
-    group.groups.forEach(sub => inner.appendChild(subgroupEl(sub, group.color)));
-    if(group.etfs && group.etfs.length) inner.appendChild(etfSectionEl(group.etfs));
+    subEls.forEach(el => inner.appendChild(el));
+    if(!searchQuery && group.etfs && group.etfs.length) inner.appendChild(etfSectionEl(group.etfs));
   } else {
     const stocks = document.createElement('div');
     stocks.className = 'stocks';
-    group.companies.forEach(c => stocks.appendChild(stockCard(c)));
+    flatCompanies.forEach(c => stocks.appendChild(stockCard(c)));
     inner.appendChild(stocks);
   }
   body.appendChild(inner);
@@ -2191,10 +2651,16 @@ function renderGroups(resetOpen){
   const container = document.getElementById('groups');
   container.innerHTML = '';
   const nested = currentView === 'sector';
-  const groups = nested ? activeSectors() : buildChainGroups();
-  groups.forEach((g, i) => {
-    container.appendChild(groupEl(g, resetOpen ? i === 0 : false, nested));
+  const groups = nested ? activeSectors() : buildThemeGroups(currentTheme);
+  const rendered = [];
+  groups.forEach((g) => {
+    const el = groupEl(g, false, nested);
+    if(el) rendered.push(el);
   });
+  rendered.forEach(el => container.appendChild(el));
+
+  const emptyMsg = document.getElementById('searchEmpty');
+  if(emptyMsg) emptyMsg.hidden = !(searchQuery && rendered.length === 0);
 }
 
 /* ---- user-added stocks: form + localStorage persistence ---- */
@@ -2286,8 +2752,9 @@ function toggleCustomWrap(selectId, wrapId){
 
 function populateChainOptions(){
   const sel = document.getElementById('fChain');
+  const AI_CHAIN_STAGES = ['하드웨어','인프라','데이터센터','클라우드','AI모델·소프트웨어','응용·서비스','보안','피지컬AI'];
   sel.innerHTML = '<option value="">해당 없음</option>' +
-    THEMES.ai.order.map(k => `<option value="${k}">${k}</option>`).join('');
+    AI_CHAIN_STAGES.map(k => `<option value="${k}">${k}</option>`).join('');
 }
 
 document.getElementById('addToggle').addEventListener('click', () => {
@@ -2350,7 +2817,6 @@ document.getElementById('addPanel').addEventListener('submit', (ev) => {
   msg.className = 'add-msg';
   document.getElementById('addPanel').reset();
   populateSectorOptions();
-  renderChips();
   renderGroups(false);
 });
 
@@ -2370,9 +2836,6 @@ document.querySelectorAll('#topTabs button').forEach(btn => {
       currentMarket = btn.dataset.market;
       currentView = 'sector';
       document.getElementById('themeSubTabs').hidden = true;
-      activeTags = new Set();
-      document.getElementById('eyebrow').textContent = 'SECTOR COMPASS · ' + MARKETS[currentMarket].label;
-      renderChips();
       renderGroups(true);
       if(!document.getElementById('addPanel').hidden){
         document.getElementById('addMarketLabel').textContent = currentMarket === 'us' ? '미국' : '한국';
@@ -2381,34 +2844,65 @@ document.querySelectorAll('#topTabs button').forEach(btn => {
     } else if(btn.dataset.mode === 'theme'){
       currentView = 'chain';
       document.getElementById('themeSubTabs').hidden = false;
-      activeTags = new Set();
-      renderChips();
+      document.getElementById('themeSelect').value = currentTheme;
+      renderThemeInfo();
       renderGroups(true);
     }
   });
 });
 
-document.getElementById('themeFilterToggle').addEventListener('click', () => {
-  const btn = document.getElementById('themeFilterToggle');
-  const row = document.getElementById('chipRow');
-  const opening = row.hidden;
-  row.hidden = !opening;
-  btn.classList.toggle('open', opening);
-  btn.setAttribute('aria-expanded', String(opening));
+document.getElementById('searchInput').addEventListener('input', (ev) => {
+  searchQuery = ev.target.value.trim().toLowerCase();
+  document.getElementById('searchClear').hidden = !searchQuery;
+  renderGroups(true);
+});
+document.getElementById('searchClear').addEventListener('click', () => {
+  const input = document.getElementById('searchInput');
+  input.value = '';
+  searchQuery = '';
+  document.getElementById('searchClear').hidden = true;
+  renderGroups(true);
+  input.focus();
 });
 
-document.querySelectorAll('#themeSubTabs button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    setActiveInGroup(document.getElementById('themeSubTabs'), btn);
-    currentTheme = btn.dataset.theme;
-    currentView = 'chain';
-    renderGroups(true);
-  });
+document.getElementById('themeSelect').addEventListener('change', (ev) => {
+  currentTheme = ev.target.value;
+  renderThemeInfo();
+  renderGroups(true);
+});
+
+document.getElementById('themeStatusHead').addEventListener('click', () => {
+  const acc = document.getElementById('themeStatusAccordion');
+  const opening = !acc.classList.contains('open');
+  acc.classList.toggle('open', opening);
+  document.getElementById('themeStatusHead').setAttribute('aria-expanded', String(opening));
+});
+
+document.getElementById('themeStatusOptions').addEventListener('click', (ev) => {
+  const btn = ev.target.closest('button[data-status]');
+  if(!btn) return;
+  const nowActive = btn.classList.contains('active');
+  setThemeOverride(currentTheme, {status: nowActive ? '' : btn.dataset.status});
+  document.getElementById('themeStatusAccordion').classList.remove('open');
+  document.getElementById('themeStatusHead').setAttribute('aria-expanded', 'false');
+  renderThemeInfo();
+});
+
+document.getElementById('themeFirstSeenInput').addEventListener('input', (ev) => {
+  setThemeOverride(currentTheme, {firstSeen: ev.target.value});
 });
 
 loadStoredAdditions();
+let tickerIndex = {};
+function buildTickerIndex(){
+  tickerIndex = {};
+  ['us','kr'].forEach(m => allCompanies(m).forEach(c => { tickerIndex[m+':'+c.t] = c; }));
+}
+buildTickerIndex();
+loadThemeOverrides();
 populateChainOptions();
-renderChips();
+populateThemeSelect();
+renderThemeInfo();
 renderGroups(true);
 </script>
 
