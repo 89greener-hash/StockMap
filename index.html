@@ -1,0 +1,1964 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>주식 나침반</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#f4f2ec;
+    --surface:#ffffff;
+    --surface-2:#eeece3;
+    --border:#dcd8cb;
+    --text:#211f1a;
+    --text-dim:#6b6656;
+    --text-faint:#948f7c;
+    --accent:#1f6f5c;
+    --accent-text:#f4f2ec;
+    --chip-bg:#eae7db;
+    --chip-text:#4a463a;
+    --chip-active-bg:#1f6f5c;
+    --chip-active-text:#f4f2ec;
+    --shadow: 0 1px 2px rgba(30,28,20,0.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#15181a;
+      --surface:#1d2124;
+      --surface-2:#242830;
+      --border:#33383e;
+      --text:#eceae2;
+      --text-dim:#a4a094;
+      --text-faint:#726d5e;
+      --accent:#5fcbab;
+      --accent-text:#0f1513;
+      --chip-bg:#282d31;
+      --chip-text:#c7c3b6;
+      --chip-active-bg:#5fcbab;
+      --chip-active-text:#0f1513;
+      --shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#15181a;
+    --surface:#1d2124;
+    --surface-2:#242830;
+    --border:#33383e;
+    --text:#eceae2;
+    --text-dim:#a4a094;
+    --text-faint:#726d5e;
+    --accent:#5fcbab;
+    --accent-text:#0f1513;
+    --chip-bg:#282d31;
+    --chip-text:#c7c3b6;
+    --chip-active-bg:#5fcbab;
+    --chip-active-text:#0f1513;
+    --shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"IBM Plex Sans KR", "Noto Sans KR", system-ui, sans-serif;
+    padding-inline:16px;
+    padding-block:28px 60px;
+  }
+  .mono{font-family:"IBM Plex Mono", ui-monospace, monospace;}
+
+  .wrap{max-width:920px; margin:0 auto;}
+
+  header.page{margin-bottom:22px;}
+  .eyebrow{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+    margin:0 0 8px;
+  }
+  h1{
+    font-size:clamp(24px,4.5vw,32px);
+    line-height:1.2;
+    margin:0 0 8px;
+    text-wrap:balance;
+    letter-spacing:-.01em;
+  }
+  .sub{
+    color:var(--text-dim);
+    font-size:14.5px;
+    line-height:1.6;
+    margin:0;
+    max-width:60ch;
+  }
+
+  /* view toggle */
+  .view-toggle{
+    display:flex;
+    gap:2px;
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:3px;
+    margin-top:20px;
+    width:fit-content;
+  }
+  .view-toggle button{
+    appearance:none;
+    border:none;
+    background:transparent;
+    color:var(--text-dim);
+    font-family:inherit;
+    font-size:13px;
+    font-weight:600;
+    padding:8px 14px;
+    border-radius:7px;
+    cursor:pointer;
+  }
+  .view-toggle button.active{
+    background:var(--surface);
+    color:var(--text);
+    box-shadow:var(--shadow);
+  }
+  .view-toggle button:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+
+  /* theme filter chips — floats in the corner, stacked under the add-toggle button */
+  .theme-filter{
+    position:fixed;
+    top:calc(16px + env(safe-area-inset-top, 0px) + 46px);
+    right:16px;
+    z-index:29;
+    max-width:min(320px, calc(100vw - 32px));
+  }
+  .theme-filter-toggle{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    appearance:none;
+    border:1px solid var(--border);
+    background:var(--surface);
+    color:var(--text-dim);
+    font-family:inherit;
+    font-size:12.5px;
+    font-weight:600;
+    padding:8px 12px;
+    border-radius:9px;
+    cursor:pointer;
+    box-shadow:var(--shadow);
+  }
+  .theme-filter-toggle:hover{color:var(--text); border-color:var(--accent);}
+  .theme-filter-toggle:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  .theme-filter-toggle .label{
+    font-family:"IBM Plex Mono", monospace;
+    letter-spacing:.06em;
+  }
+  .theme-filter-toggle .chev{width:12px; height:12px; color:var(--text-faint);}
+  .theme-filter-toggle.open .chev{transform:rotate(90deg);}
+  .chips{
+    display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:10px;
+    box-shadow:var(--shadow);
+    max-height:55vh;
+    overflow-y:auto;
+  }
+
+  @media (max-width:480px){
+    .theme-filter{
+      top:auto;
+      bottom:calc(16px + env(safe-area-inset-bottom, 0px) + 46px);
+      right:16px;
+    }
+  }
+  .chip{
+    appearance:none;
+    border:1px solid var(--border);
+    background:var(--chip-bg);
+    color:var(--chip-text);
+    font-family:inherit;
+    font-size:12.5px;
+    font-weight:500;
+    padding:6px 11px;
+    border-radius:999px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .chip:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  .chip.active{
+    background:var(--chip-active-bg);
+    color:var(--chip-active-text);
+    border-color:var(--chip-active-bg);
+  }
+  .chip .count{opacity:.65; font-family:"IBM Plex Mono",monospace; font-size:11px; margin-left:3px;}
+
+  /* accordion groups */
+  .groups{margin-top:24px; display:flex; flex-direction:column; gap:8px;}
+
+  .group{
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:var(--surface);
+    overflow:hidden;
+  }
+  .group-head{
+    width:100%;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:13px 14px;
+    background:transparent;
+    border:none;
+    cursor:pointer;
+    text-align:left;
+    font-family:inherit;
+    color:var(--text);
+  }
+  .group-head:focus-visible{outline:2px solid var(--accent); outline-offset:-2px;}
+  .dot{
+    width:9px; height:9px; border-radius:50%;
+    flex:none;
+    background:var(--dot-color, var(--accent));
+  }
+  .group-name{
+    font-weight:600;
+    font-size:15px;
+    flex:1;
+  }
+  .group-name .en{
+    font-family:"IBM Plex Mono", monospace;
+    font-weight:400;
+    color:var(--text-faint);
+    font-size:11.5px;
+    margin-left:8px;
+  }
+  .group-count{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:12px;
+    color:var(--text-faint);
+    flex:none;
+  }
+  .chev{
+    flex:none;
+    width:14px; height:14px;
+    transition:transform .16s ease;
+    color:var(--text-faint);
+  }
+  .group.open .chev{transform:rotate(90deg);}
+
+  .group-body{
+    display:grid;
+    grid-template-rows:0fr;
+    transition:grid-template-rows .18s ease;
+  }
+  .group.open .group-body{grid-template-rows:1fr;}
+  .group-body-inner{overflow:hidden;}
+
+  /* industry-group subsections (level 2, inside a sector) */
+  .subgroup{
+    border-top:1px solid var(--border);
+  }
+  .subgroup:first-child{border-top:none;}
+  .subgroup-head{
+    width:100%;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:9px 14px;
+    background:transparent;
+    border:none;
+    cursor:pointer;
+    text-align:left;
+    font-family:inherit;
+    color:var(--text-dim);
+  }
+  .subgroup-head:focus-visible{outline:2px solid var(--accent); outline-offset:-2px;}
+  .subgroup-bar{
+    width:3px; align-self:stretch; border-radius:2px;
+    background:var(--dot-color, var(--accent));
+    opacity:.55;
+    flex:none;
+  }
+  .subgroup-name{
+    font-weight:600;
+    font-size:12.5px;
+    letter-spacing:.01em;
+    flex:1;
+  }
+  .subgroup-name .en{
+    font-family:"IBM Plex Mono", monospace;
+    font-weight:400;
+    color:var(--text-faint);
+    font-size:10.5px;
+    margin-left:7px;
+  }
+  .subgroup-count{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:11px;
+    color:var(--text-faint);
+    flex:none;
+  }
+  .subgroup .chev{width:11px; height:11px;}
+  .subgroup-body{
+    display:grid;
+    grid-template-rows:0fr;
+    transition:grid-template-rows .16s ease;
+  }
+  .subgroup.open .subgroup-body{grid-template-rows:1fr;}
+  .subgroup-body-inner{overflow:hidden;}
+
+  /* industry subsections (level 3, inside an industry group) */
+  .industry{border-top:1px dashed var(--border);}
+  .industry:first-child{border-top:none;}
+  .industry-head{
+    width:100%;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 14px 7px 20px;
+    background:transparent;
+    border:none;
+    cursor:pointer;
+    text-align:left;
+    font-family:inherit;
+    color:var(--text-faint);
+  }
+  .industry-head:focus-visible{outline:2px solid var(--accent); outline-offset:-2px;}
+  .industry-name{
+    font-size:10.5px;
+    font-family:"IBM Plex Mono", monospace;
+    letter-spacing:.05em;
+    flex:1;
+  }
+  .industry-name .en{opacity:.75;}
+  .industry-count{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:10.5px;
+    color:var(--text-faint);
+    flex:none;
+  }
+  .industry .chev{width:10px; height:10px;}
+  .industry-body{
+    display:grid;
+    grid-template-rows:0fr;
+    transition:grid-template-rows .16s ease;
+  }
+  .industry.open .industry-body{grid-template-rows:1fr;}
+  .industry-body-inner{overflow:hidden;}
+
+  .stocks{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(250px,1fr));
+    gap:8px;
+    padding:2px 12px 12px;
+  }
+
+  .stock{
+    border:1px solid var(--border);
+    background:var(--surface-2);
+    border-radius:10px;
+    padding:10px 11px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    transition:opacity .12s ease;
+  }
+  .stock.dim{opacity:.32;}
+  .stock-top{display:flex; align-items:baseline; gap:8px;}
+  .ticker{
+    font-family:"IBM Plex Mono", monospace;
+    font-weight:600;
+    font-size:13px;
+    color:var(--text);
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:5px;
+    padding:1px 6px;
+  }
+  .stock-name{font-size:13.5px; font-weight:600; color:var(--text);}
+  .stock-name .en{font-weight:400; color:var(--text-faint); font-size:11.5px;}
+  .stock-desc{font-size:12.5px; color:var(--text-dim); line-height:1.5; margin:0;}
+  .tag-row{display:flex; flex-wrap:wrap; gap:4px; margin-top:2px;}
+  .tag{
+    font-size:10.5px;
+    font-family:"IBM Plex Mono", monospace;
+    color:var(--text-faint);
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:5px;
+    padding:1px 6px;
+  }
+  .tag.hit{
+    color:var(--chip-active-bg);
+    border-color:var(--chip-active-bg);
+  }
+
+  /* ETF section (sector-level, separate from individual stocks, collapsible) */
+  .etf-section{
+    border-top:1px solid var(--border);
+    background:var(--surface-2);
+  }
+  .etf-head{
+    width:100%;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:9px 14px;
+    background:transparent;
+    border:none;
+    cursor:pointer;
+    text-align:left;
+    font-family:inherit;
+    color:var(--text-faint);
+  }
+  .etf-head:focus-visible{outline:2px solid var(--accent); outline-offset:-2px;}
+  .etf-heading{
+    flex:1;
+    font-size:11px;
+    font-family:"IBM Plex Mono", monospace;
+    letter-spacing:.05em;
+  }
+  .etf-count{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:11px;
+    color:var(--text-faint);
+    flex:none;
+  }
+  .etf-section .chev{width:11px; height:11px;}
+  .etf-body{
+    display:grid;
+    grid-template-rows:0fr;
+    transition:grid-template-rows .16s ease;
+  }
+  .etf-section.open .etf-body{grid-template-rows:1fr;}
+  .etf-body-inner{overflow:hidden;}
+  .etf-list{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(230px,1fr));
+    gap:8px;
+    padding:0 14px 12px;
+  }
+  .etf-card{
+    border:1px dashed var(--border);
+    background:var(--surface);
+    border-radius:10px;
+    padding:9px 10px;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .etf-top{display:flex; align-items:baseline; gap:8px;}
+  .etf-badge{
+    font-family:"IBM Plex Mono", monospace;
+    font-weight:600;
+    font-size:10px;
+    letter-spacing:.04em;
+    color:var(--accent);
+    border:1px solid var(--accent);
+    border-radius:5px;
+    padding:1px 5px;
+    flex:none;
+  }
+  .etf-ticker{
+    font-family:"IBM Plex Mono", monospace;
+    font-weight:600;
+    font-size:12.5px;
+    color:var(--text);
+  }
+  .etf-name{font-size:12px; color:var(--text-dim);}
+  .etf-desc{font-size:11.5px; color:var(--text-faint); line-height:1.5; margin:0;}
+
+  /* add-stock panel */
+  .add-toggle{
+    position:fixed;
+    top:calc(16px + env(safe-area-inset-top, 0px));
+    right:16px;
+    z-index:30;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    appearance:none;
+    border:1px solid var(--border);
+    background:var(--surface);
+    color:var(--text-dim);
+    font-family:inherit;
+    font-size:13px;
+    font-weight:600;
+    padding:9px 14px;
+    border-radius:10px;
+    cursor:pointer;
+    box-shadow:var(--shadow);
+  }
+  .add-toggle:hover{color:var(--text); border-color:var(--accent);}
+  .add-toggle:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+
+  @media (max-width:480px){
+    .add-toggle{
+      top:auto;
+      bottom:calc(16px + env(safe-area-inset-bottom, 0px));
+      right:16px;
+    }
+  }
+
+  .add-panel{
+    margin-top:10px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:var(--surface);
+    padding:16px;
+  }
+  .add-panel[hidden]{display:none;}
+  .add-panel h2{
+    font-size:14px;
+    margin:0 0 4px;
+  }
+  .add-panel .hint{
+    font-size:12px;
+    color:var(--text-faint);
+    margin:0 0 14px;
+    line-height:1.6;
+  }
+  .add-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px 12px;
+  }
+  .add-field{display:flex; flex-direction:column; gap:4px;}
+  .add-field.span2{grid-column:1 / -1;}
+  .add-field label{
+    font-size:11px;
+    font-family:"IBM Plex Mono", monospace;
+    color:var(--text-faint);
+    letter-spacing:.03em;
+  }
+  .add-field input, .add-field select, .add-field textarea{
+    font-family:inherit;
+    font-size:13px;
+    color:var(--text);
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:8px 10px;
+  }
+  .add-field textarea{resize:vertical; min-height:44px;}
+  .add-field input:focus, .add-field select:focus, .add-field textarea:focus{
+    outline:2px solid var(--accent); outline-offset:1px;
+  }
+  .add-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-top:14px;
+  }
+  .add-submit{
+    appearance:none;
+    border:none;
+    background:var(--accent);
+    color:var(--accent-text);
+    font-family:inherit;
+    font-size:13px;
+    font-weight:700;
+    padding:9px 18px;
+    border-radius:8px;
+    cursor:pointer;
+  }
+  .add-submit:focus-visible{outline:2px solid var(--text); outline-offset:2px;}
+  .add-msg{font-size:12px; color:var(--text-dim);}
+  .add-msg.error{color:#c0503f;}
+
+  .stock.user-added{border-color:var(--accent);}
+  .stock-remove{
+    appearance:none;
+    border:none;
+    background:transparent;
+    color:var(--text-faint);
+    cursor:pointer;
+    font-size:12px;
+    line-height:1;
+    padding:2px 4px;
+    margin-left:auto;
+    flex:none;
+  }
+  .stock-remove:hover{color:#c0503f;}
+  .user-badge{
+    font-size:10px;
+    font-family:"IBM Plex Mono", monospace;
+    color:var(--accent);
+    border:1px solid var(--accent);
+    border-radius:5px;
+    padding:0 5px;
+    flex:none;
+  }
+  .market-badge{
+    font-size:10px;
+    font-family:"IBM Plex Mono", monospace;
+    color:var(--text-faint);
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:5px;
+    padding:0 5px;
+    flex:none;
+  }
+
+  @media (max-width:520px){
+    .add-grid{grid-template-columns:1fr;}
+  }
+
+  footer.note{
+    margin-top:28px;
+    font-size:12px;
+    color:var(--text-faint);
+    line-height:1.7;
+    border-top:1px solid var(--border);
+    padding-top:14px;
+  }
+
+  @media (max-width:480px){
+    .stocks{grid-template-columns:1fr;}
+  }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="page">
+    <p class="eyebrow" id="eyebrow">SECTOR COMPASS · US EQUITIES</p>
+    <h1>주식 나침반</h1>
+
+    <div class="view-toggle" role="tablist" aria-label="보기" id="topTabs">
+      <button type="button" data-market="us" class="active" role="tab" aria-selected="true">미국 주식</button>
+      <button type="button" data-market="kr" role="tab" aria-selected="false">한국 주식</button>
+      <button type="button" data-mode="theme" role="tab" aria-selected="false">테마 보기</button>
+    </div>
+
+    <div class="view-toggle" role="tablist" aria-label="테마" id="themeSubTabs" hidden>
+      <button type="button" data-theme="ai" class="active" role="tab" aria-selected="true">🤖 AI 밸류체인</button>
+      <button type="button" data-theme="battery" role="tab" aria-selected="false">🔋 2차전지 밸류체인</button>
+      <button type="button" data-theme="robot" role="tab" aria-selected="false">🦾 로봇·피지컬AI 밸류체인</button>
+      <button type="button" data-theme="nuclear" role="tab" aria-selected="false">⚛️ 원자력·전력 밸류체인</button>
+    </div>
+
+    <button type="button" class="add-toggle" id="addToggle" aria-expanded="false">
+      ＋ 종목추가
+    </button>
+
+    <form class="add-panel" id="addPanel" hidden>
+      <h2>새 종목 추가</h2>
+      <p class="hint">지금 선택된 시장(<span id="addMarketLabel">미국</span>)에 종목을 추가해요. 섹터·산업군·소분류를 고르면 그 자리에 카드로 들어가고, 이 브라우저에만 저장돼요(다른 기기·Claude와는 공유되지 않아요).</p>
+      <div class="add-grid">
+        <div class="add-field">
+          <label for="fTicker">티커 / 종목코드</label>
+          <input id="fTicker" type="text" placeholder="예: PLTR / 005930" required>
+        </div>
+        <div class="add-field">
+          <label for="fKr">종목명 (국문)</label>
+          <input id="fKr" type="text" placeholder="예: 팔란티어" required>
+        </div>
+        <div class="add-field">
+          <label for="fEn">종목명 (영문)</label>
+          <input id="fEn" type="text" placeholder="예: Palantir Technologies">
+        </div>
+        <div class="add-field">
+          <label for="fSector">섹터</label>
+          <select id="fSector"></select>
+        </div>
+        <div class="add-field">
+          <label for="fGroup">산업군(중분류)</label>
+          <select id="fGroup"></select>
+        </div>
+        <div class="add-field" id="fGroupCustomWrap" hidden>
+          <label for="fGroupCustom">새 산업군 이름</label>
+          <input id="fGroupCustom" type="text" placeholder="예: 우주항공">
+        </div>
+        <div class="add-field">
+          <label for="fIndustry">소분류(산업)</label>
+          <select id="fIndustry"></select>
+        </div>
+        <div class="add-field" id="fIndustryCustomWrap" hidden>
+          <label for="fIndustryCustom">새 소분류 이름</label>
+          <input id="fIndustryCustom" type="text" placeholder="예: 우주발사체">
+        </div>
+        <div class="add-field">
+          <label for="fChain">AI 밸류체인 단계 (선택)</label>
+          <select id="fChain">
+            <option value="">해당 없음</option>
+          </select>
+        </div>
+        <div class="add-field">
+          <label for="fTags">테마 태그 (쉼표로 구분, 선택)</label>
+          <input id="fTags" type="text" placeholder="예: AI하드웨어, 로봇">
+        </div>
+        <div class="add-field span2">
+          <label for="fDesc">한 줄 설명</label>
+          <textarea id="fDesc" placeholder="예: 정부·기업용 빅데이터 분석 소프트웨어를 만드는 회사" required></textarea>
+        </div>
+      </div>
+      <div class="add-actions">
+        <button type="submit" class="add-submit">추가하기</button>
+        <span class="add-msg" id="addMsg"></span>
+      </div>
+    </form>
+
+    <div class="theme-filter">
+      <button type="button" class="theme-filter-toggle" id="themeFilterToggle" aria-expanded="false">
+        <span class="label">테마 태그 필터</span>
+        <svg class="chev" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="chips" id="chipRow" hidden></div>
+    </div>
+  </header>
+
+  <div class="groups" id="groups"></div>
+
+  <footer class="note">
+    종목·ETF·설명은 학습용 예시로 직접 선별한 것이며 실시간 시세나 투자 추천이 아닙니다 · 섹터 분류는 GICS(글로벌 산업분류기준) 대분류 11개 · 중분류(산업군) 25개 · 소분류(산업) 74개 체계를 기준으로 합니다 · 에너지·소재·유틸리티처럼 중분류가 1개뿐인 섹터, 반도체처럼 소분류가 1개뿐인 산업군도 있어요 · 한국 통신서비스·자동차·담배처럼 실제 상장사 수 자체가 적어 5개를 못 채운 소분류도 있고, 한국 유틸리티는 섹터 전용 ETF를 찾지 못해 비워뒀어요 · 한국 종목·ETF 코드는 미국 대형주보다 검증 신뢰도가 낮으니 실제 투자 전 반드시 증권사에서 재확인하세요 · 밸류체인 보기는 AI 관련 태그가 있는 종목만 표시돼요.
+  </footer>
+</div>
+
+<script>
+const SECTORS_US = [
+  {id:'it', kr:'정보기술', en:'Information Technology', color:'#2E6F63', etfs:[
+    {t:'XLK', kr:'테크놀로지 셀렉트 섹터 SPDR 펀드', en:'Technology Select Sector SPDR Fund', desc:'S&P500 내 정보기술 섹터 전체에 분산투자하는 대표 ETF'},
+    {t:'SOXX', kr:'아이셰어즈 반도체 ETF', en:'iShares Semiconductor ETF', desc:'미국 반도체 기업들에 집중 투자하는 ETF'},
+    {t:'SMH', kr:'반에크 반도체 ETF', en:'VanEck Semiconductor ETF', desc:'전 세계 반도체 밸류체인 기업에 투자하는 ETF'},
+  ], groups:[
+    {kr:'소프트웨어·서비스', en:'Software & Services', industries:[
+      {kr:'IT서비스', en:'IT Services', companies:[
+        {t:'ACN', kr:'액센츄어', en:'Accenture', desc:'기업의 IT 시스템 구축·컨설팅을 대행하는 서비스 회사', tags:[]},
+        {t:'IBM', kr:'IBM', en:'IBM', desc:'기업용 IT 인프라와 AI 서비스(왓슨x)를 제공하는 회사', tags:['AI소프트웨어'], chains:{ai:'응용·서비스'}},
+        {t:'CTSH', kr:'코그니전트', en:'Cognizant', desc:'기업 IT 아웃소싱·디지털 전환을 대행하는 서비스 회사', tags:[]},
+        {t:'INFY', kr:'인포시스', en:'Infosys', desc:'인도계 글로벌 IT 컨설팅·아웃소싱 회사', tags:[]},
+        {t:'EPAM', kr:'EPAM시스템즈', en:'EPAM Systems', desc:'소프트웨어 개발 아웃소싱에 특화된 IT서비스 회사', tags:[]},
+      ]},
+      {kr:'소프트웨어', en:'Software', companies:[
+        {t:'MSFT', kr:'마이크로소프트', en:'Microsoft', desc:'Azure 클라우드와 오피스·AI 소프트웨어를 만드는 회사', tags:['클라우드','AI소프트웨어'], chains:{ai:'클라우드'}},
+        {t:'ORCL', kr:'오라클', en:'Oracle', desc:'기업용 데이터베이스와 클라우드 인프라를 제공하는 회사', tags:['클라우드'], chains:{ai:'클라우드'}},
+        {t:'CRM', kr:'세일즈포스', en:'Salesforce', desc:'고객관리(CRM) 클라우드 소프트웨어를 제공하는 회사', tags:['소프트웨어','AI소프트웨어'], chains:{ai:'응용·서비스'}},
+        {t:'ADBE', kr:'어도비', en:'Adobe', desc:'포토샵 등 창작 도구와 생성형 AI 기능을 만드는 회사', tags:['소프트웨어','AI소프트웨어'], chains:{ai:'응용·서비스'}},
+        {t:'INTU', kr:'인튜이트', en:'Intuit', desc:'터보택스·퀵북스 등 세무·회계 소프트웨어 회사', tags:['소프트웨어']},
+        {t:'CRWD', kr:'크라우드스트라이크', en:'CrowdStrike', desc:'클라우드 기반 사이버 보안·위협탐지 소프트웨어 회사', tags:['보안'], chains:{ai:'보안'}},
+        {t:'PANW', kr:'팔로알토네트웍스', en:'Palo Alto Networks', desc:'기업 네트워크·클라우드 보안 솔루션을 제공하는 회사', tags:['보안'], chains:{ai:'보안'}},
+      ]},
+    ]},
+    {kr:'기술 하드웨어·장비', en:'Technology Hardware & Equipment', industries:[
+      {kr:'통신장비', en:'Communications Equipment', companies:[
+        {t:'CSCO', kr:'시스코', en:'Cisco Systems', desc:'기업·데이터센터용 네트워크 장비를 만드는 회사', tags:['AI인프라'], chains:{ai:'인프라'}},
+        {t:'ANET', kr:'아리스타네트웍스', en:'Arista Networks', desc:'대규모 AI 데이터센터용 고속 네트워크 스위치 회사', tags:['AI인프라'], chains:{ai:'인프라'}},
+        {t:'JNPR', kr:'주니퍼네트웍스', en:'Juniper Networks', desc:'기업·통신사용 네트워크 장비를 만드는 회사', tags:['AI인프라']},
+        {t:'MSI', kr:'모토로라솔루션즈', en:'Motorola Solutions', desc:'공공안전용 무선통신 장비를 만드는 회사', tags:[]},
+        {t:'CIEN', kr:'시에나', en:'Ciena', desc:'광통신 네트워크 장비를 만드는 회사', tags:['AI인프라']},
+      ]},
+      {kr:'기술 하드웨어·저장장치', en:'Technology Hardware, Storage & Peripherals', companies:[
+        {t:'AAPL', kr:'애플', en:'Apple', desc:'아이폰·맥 등 기기와 자체 생태계 소프트웨어를 만드는 회사', tags:[]},
+        {t:'DELL', kr:'델테크놀로지스', en:'Dell Technologies', desc:'PC와 함께 AI 서버·데이터센터 장비를 만드는 회사', tags:['AI인프라'], chains:{ai:'인프라'}},
+        {t:'HPQ', kr:'HP', en:'HP Inc.', desc:'PC·프린터를 만드는 하드웨어 회사', tags:[]},
+        {t:'HPE', kr:'휴렛팩커드엔터프라이즈', en:'Hewlett Packard Enterprise', desc:'기업용 서버와 AI 인프라 장비를 만드는 회사', tags:['AI인프라','데이터센터'], chains:{ai:'인프라'}},
+        {t:'NTAP', kr:'넷앱', en:'NetApp', desc:'데이터 저장·관리 솔루션을 만드는 회사', tags:['데이터센터']},
+      ]},
+      {kr:'전자장비·기기·부품', en:'Electronic Equipment, Instruments & Components', companies:[
+        {t:'KEYS', kr:'키사이트테크놀로지스', en:'Keysight Technologies', desc:'전자·반도체 제품을 시험·측정하는 계측장비 회사', tags:[]},
+        {t:'TEL', kr:'TE커넥티비티', en:'TE Connectivity', desc:'전자·산업용 커넥터·센서를 만드는 회사', tags:[]},
+        {t:'GLW', kr:'코닝', en:'Corning', desc:'광섬유·디스플레이 유리 등 특수소재를 만드는 회사', tags:['AI인프라']},
+        {t:'APH', kr:'앰페놀', en:'Amphenol', desc:'데이터센터·통신용 커넥터를 만드는 회사', tags:['AI인프라']},
+        {t:'FTV', kr:'포티브', en:'Fortive', desc:'산업용 계측·자동화 장비를 만드는 회사', tags:[]},
+      ]},
+    ]},
+    {kr:'반도체', en:'Semiconductors & Semiconductor Equipment', industries:[
+      {kr:'반도체', en:'Semiconductors', companies:[
+        {t:'NVDA', kr:'엔비디아', en:'Nvidia', desc:'AI 학습·추론용 GPU를 설계하는 팹리스 반도체 회사', tags:['AI하드웨어','반도체'], chains:{ai:'하드웨어'}},
+        {t:'AMD', kr:'AMD', en:'AMD', desc:'서버·PC용 CPU와 AI 가속기를 설계하는 반도체 회사', tags:['AI하드웨어','반도체'], chains:{ai:'하드웨어'}},
+        {t:'AVGO', kr:'브로드컴', en:'Broadcom', desc:'데이터센터 네트워크 칩과 맞춤형 AI 반도체를 만드는 회사', tags:['AI하드웨어','반도체'], chains:{ai:'하드웨어'}},
+        {t:'QCOM', kr:'퀄컴', en:'Qualcomm', desc:'스마트폰용 모바일 프로세서·통신칩을 설계하는 회사', tags:['반도체']},
+        {t:'TXN', kr:'텍사스인스트루먼트', en:'Texas Instruments', desc:'산업·자동차용 아날로그 반도체를 만드는 회사', tags:['반도체']},
+        {t:'INTC', kr:'인텔', en:'Intel', desc:'PC·서버용 CPU를 설계·생산하는 종합 반도체 회사', tags:['반도체']},
+      ]},
+      {kr:'반도체 장비·소재', en:'Semiconductor Materials & Equipment', companies:[
+        {t:'AMAT', kr:'어플라이드머티어리얼즈', en:'Applied Materials', desc:'반도체를 만드는 데 쓰이는 생산장비를 만드는 회사', tags:['반도체장비']},
+        {t:'LRCX', kr:'램리서치', en:'Lam Research', desc:'반도체 식각·증착 공정 장비를 만드는 회사', tags:['반도체장비']},
+        {t:'KLAC', kr:'KLA', en:'KLA Corporation', desc:'반도체 결함을 검사하는 계측·검사 장비 회사', tags:['반도체장비']},
+        {t:'TER', kr:'테라다인', en:'Teradyne', desc:'반도체 완성 후 성능을 검사하는 테스트 장비 회사', tags:['반도체장비']},
+        {t:'ENTG', kr:'엔테그리스', en:'Entegris', desc:'반도체 공정에 쓰이는 특수 소재·부품을 만드는 회사', tags:['반도체장비']},
+      ]},
+    ]},
+  ]},
+  {id:'comm', kr:'커뮤니케이션서비스', en:'Communication Services', color:'#6C5B9E', etfs:[
+    {t:'XLC', kr:'커뮤니케이션 서비스 셀렉트 섹터 SPDR 펀드', en:'Communication Services Select Sector SPDR Fund', desc:'S&P500 내 커뮤니케이션서비스 섹터 전체에 분산투자하는 ETF'},
+    {t:'VOX', kr:'뱅가드 커뮤니케이션 서비스 ETF', en:'Vanguard Communication Services ETF', desc:'커뮤니케이션서비스 섹터에 저비용으로 분산투자하는 뱅가드 ETF'},
+    {t:'FCOM', kr:'피델리티 MSCI 커뮤니케이션 서비스 ETF', en:'Fidelity MSCI Communication Services ETF', desc:'MSCI 커뮤니케이션서비스 지수를 추종하는 ETF'},
+  ], groups:[
+    {kr:'미디어·엔터테인먼트', en:'Media & Entertainment', industries:[
+      {kr:'대화형 미디어·서비스', en:'Interactive Media & Services', companies:[
+        {t:'GOOGL', kr:'알파벳', en:'Alphabet', desc:'구글 검색·유튜브와 자체 AI 모델·클라우드를 운영하는 회사', tags:['클라우드','AI소프트웨어'], chains:{ai:'클라우드'}},
+        {t:'META', kr:'메타', en:'Meta Platforms', desc:'페이스북·인스타그램을 운영하며 자체 AI 모델을 개발하는 회사', tags:['AI소프트웨어'], chains:{ai:'AI모델·소프트웨어'}},
+        {t:'PINS', kr:'핀터레스트', en:'Pinterest', desc:'이미지 기반 소셜 검색·쇼핑 플랫폼 회사', tags:[]},
+        {t:'SNAP', kr:'스냅', en:'Snap Inc.', desc:'스냅챗을 운영하는 소셜미디어 회사', tags:[]},
+        {t:'MTCH', kr:'매치그룹', en:'Match Group', desc:'틴더 등 데이팅 앱을 운영하는 회사', tags:[]},
+      ]},
+      {kr:'엔터테인먼트', en:'Entertainment', companies:[
+        {t:'NFLX', kr:'넷플릭스', en:'Netflix', desc:'구독형 영상 스트리밍 서비스를 제공하는 회사', tags:[]},
+        {t:'DIS', kr:'디즈니', en:'Disney', desc:'영화·테마파크·스트리밍을 아우르는 종합 미디어 회사', tags:[]},
+        {t:'EA', kr:'일렉트로닉아츠', en:'Electronic Arts', desc:'FIFA·심즈 등을 만드는 비디오게임 회사', tags:[]},
+        {t:'WBD', kr:'워너브라더스디스커버리', en:'Warner Bros. Discovery', desc:'영화 스튜디오와 케이블 채널을 운영하는 미디어 회사', tags:[]},
+        {t:'TTWO', kr:'테이크투인터랙티브', en:'Take-Two Interactive', desc:'GTA 등을 만드는 비디오게임 회사', tags:[]},
+      ]},
+    ]},
+    {kr:'통신서비스', en:'Telecommunication Services', industries:[
+      {kr:'종합통신서비스', en:'Diversified Telecommunication Services', companies:[
+        {t:'VZ', kr:'버라이즌', en:'Verizon', desc:'미국 최대 규모의 이동통신·유선 네트워크 회사', tags:['인프라']},
+        {t:'T', kr:'AT&T', en:'AT&T', desc:'미국의 대형 유무선 통신 서비스 회사', tags:['인프라']},
+        {t:'CHTR', kr:'차터커뮤니케이션즈', en:'Charter Communications', desc:'케이블·초고속인터넷을 제공하는 통신회사', tags:['인프라']},
+        {t:'LUMN', kr:'루멘테크놀로지스', en:'Lumen Technologies', desc:'기업용 광통신 네트워크를 운영하는 회사', tags:['인프라']},
+        {t:'TDS', kr:'텔레폰앤드데이터시스템즈', en:'Telephone and Data Systems', desc:'미국 중소도시 중심의 통신 서비스 회사', tags:[]},
+      ]},
+      {kr:'무선통신서비스', en:'Wireless Telecommunication Services', companies:[
+        {t:'TMUS', kr:'티모바일', en:'T-Mobile US', desc:'5G 네트워크 중심의 이동통신 회사', tags:['인프라']},
+        {t:'USM', kr:'US셀룰러', en:'United States Cellular', desc:'미국 중소도시 중심의 지역 이동통신 회사', tags:[]},
+        {t:'VOD', kr:'보다폰', en:'Vodafone', desc:'유럽·아프리카에 서비스하는 영국계 이동통신 회사(미국 상장 ADR)', tags:[]},
+        {t:'AMX', kr:'아메리카모빌', en:'América Móvil', desc:'중남미 최대 이동통신 회사(미국 상장 ADR)', tags:[]},
+        {t:'ORAN', kr:'오렌지', en:'Orange S.A.', desc:'프랑스 대표 이동통신 회사(미국 상장 ADR)', tags:[]},
+      ]},
+    ]},
+  ]},
+  {id:'cdisc', kr:'임의소비재', en:'Consumer Discretionary', color:'#C2703D', etfs:[
+    {t:'XLY', kr:'컨슈머 디스크리셔너리 셀렉트 섹터 SPDR 펀드', en:'Consumer Discretionary Select Sector SPDR Fund', desc:'S&P500 내 임의소비재 섹터 전체에 분산투자하는 ETF'},
+    {t:'VCR', kr:'뱅가드 임의소비재 ETF', en:'Vanguard Consumer Discretionary ETF', desc:'임의소비재 섹터에 저비용으로 분산투자하는 뱅가드 ETF'},
+    {t:'FDIS', kr:'피델리티 MSCI 임의소비재 ETF', en:'Fidelity MSCI Consumer Discretionary ETF', desc:'MSCI 임의소비재 지수를 추종하는 ETF'},
+  ], groups:[
+    {kr:'자동차·부품', en:'Automobiles & Components', industries:[
+      {kr:'자동차', en:'Automobiles', companies:[
+        {t:'TSLA', kr:'테슬라', en:'Tesla', desc:'전기차와 자율주행·휴머노이드 로봇을 개발하는 회사', tags:['피지컬AI','로봇'], chains:{ai:'피지컬AI', battery:'완성차·ESS', robot:'로봇 제조'}},
+        {t:'GM', kr:'제너럴모터스', en:'General Motors', desc:'미국 대표 완성차 제조회사', tags:[], chains:{battery:'완성차·ESS'}},
+        {t:'F', kr:'포드모터', en:'Ford Motor', desc:'픽업트럭으로 유명한 미국 완성차 제조회사', tags:[]},
+        {t:'RIVN', kr:'리비안', en:'Rivian Automotive', desc:'전기 픽업트럭·밴을 만드는 신생 전기차 회사', tags:[]},
+        {t:'LCID', kr:'루시드그룹', en:'Lucid Group', desc:'고급 전기세단을 만드는 신생 전기차 회사', tags:[]},
+      ]},
+    ]},
+    {kr:'내구소비재·의류', en:'Consumer Durables & Apparel', industries:[
+      {kr:'섬유·의류·명품', en:'Textiles, Apparel & Luxury Goods', companies:[
+        {t:'NKE', kr:'나이키', en:'Nike', desc:'스포츠 의류·신발을 만드는 글로벌 브랜드 회사', tags:[]},
+        {t:'LULU', kr:'룰루레몬', en:'Lululemon', desc:'요가복 등 애슬레저 의류를 만드는 브랜드 회사', tags:[]},
+        {t:'VFC', kr:'VF코퍼레이션', en:'VF Corporation', desc:'노스페이스·반스 등을 보유한 의류 기업', tags:[]},
+        {t:'RL', kr:'랄프로렌', en:'Ralph Lauren', desc:'미국 대표 패션·명품 브랜드 회사', tags:[]},
+        {t:'TPR', kr:'테이퍼스트리', en:'Tapestry', desc:'코치·케이트스페이드를 보유한 명품 브랜드 회사', tags:[]},
+      ]},
+    ]},
+    {kr:'소비자 서비스', en:'Consumer Services', industries:[
+      {kr:'호텔·레스토랑·레저', en:'Hotels, Restaurants & Leisure', companies:[
+        {t:'MCD', kr:'맥도날드', en:'McDonald\'s', desc:'세계 최대 규모의 패스트푸드 프랜차이즈 회사', tags:[]},
+        {t:'SBUX', kr:'스타벅스', en:'Starbucks', desc:'전 세계 매장을 운영하는 커피 프랜차이즈 회사', tags:[]},
+        {t:'BKNG', kr:'부킹홀딩스', en:'Booking Holdings', desc:'부킹닷컴 등을 운영하는 온라인 여행 예약 회사', tags:[]},
+        {t:'CMG', kr:'치폴레멕시칸그릴', en:'Chipotle Mexican Grill', desc:'멕시칸 프랜차이즈 외식 회사', tags:[]},
+        {t:'MAR', kr:'메리어트인터내셔널', en:'Marriott International', desc:'세계 최대 규모의 호텔 체인 회사', tags:[]},
+      ]},
+    ]},
+    {kr:'임의소비재 유통', en:'Consumer Discretionary Distribution & Retail', industries:[
+      {kr:'복합유통', en:'Broadline Retail', companies:[
+        {t:'AMZN', kr:'아마존', en:'Amazon', desc:'이커머스와 세계 최대 클라우드(AWS)를 함께 운영하는 회사', tags:['클라우드','데이터센터'], chains:{ai:'클라우드'}},
+        {t:'EBAY', kr:'이베이', en:'eBay', desc:'온라인 경매·중고거래 플랫폼 회사', tags:[]},
+        {t:'ETSY', kr:'엣시', en:'Etsy', desc:'수공예품·빈티지 상품 중심의 이커머스 회사', tags:[]},
+        {t:'CHWY', kr:'츄이', en:'Chewy', desc:'반려동물 용품 온라인 쇼핑몰 회사', tags:[]},
+        {t:'W', kr:'웨이페어', en:'Wayfair', desc:'가구·인테리어 용품 온라인 쇼핑몰 회사', tags:[]},
+      ]},
+      {kr:'전문유통', en:'Specialty Retail', companies:[
+        {t:'HD', kr:'홈디포', en:'Home Depot', desc:'미국 최대 주택 자재·인테리어 용품 유통회사', tags:[]},
+        {t:'LOW', kr:'로우스', en:'Lowe\'s', desc:'주택 자재·용품을 판매하는 대형 유통회사', tags:[]},
+        {t:'TJX', kr:'TJX컴퍼니스', en:'TJX Companies', desc:'티제이맥스 등 할인 브랜드 의류 유통회사', tags:[]},
+        {t:'ROST', kr:'로스스토어스', en:'Ross Stores', desc:'할인 의류·잡화를 판매하는 유통회사', tags:[]},
+        {t:'BBY', kr:'베스트바이', en:'Best Buy', desc:'가전제품 전문 유통 체인 회사', tags:[]},
+      ]},
+    ]},
+  ]},
+  {id:'cstap', kr:'필수소비재', en:'Consumer Staples', color:'#8A9A5B', etfs:[
+    {t:'XLP', kr:'컨슈머 스테이플스 셀렉트 섹터 SPDR 펀드', en:'Consumer Staples Select Sector SPDR Fund', desc:'S&P500 내 필수소비재 섹터 전체에 분산투자하는 ETF'},
+    {t:'VDC', kr:'뱅가드 필수소비재 ETF', en:'Vanguard Consumer Staples ETF', desc:'필수소비재 섹터에 저비용으로 분산투자하는 뱅가드 ETF'},
+    {t:'FSTA', kr:'피델리티 MSCI 필수소비재 ETF', en:'Fidelity MSCI Consumer Staples ETF', desc:'MSCI 필수소비재 지수를 추종하는 ETF'},
+  ], groups:[
+    {kr:'필수소비재 유통', en:'Consumer Staples Distribution & Retail', industries:[
+      {kr:'필수소비재 유통', en:'Consumer Staples Distribution & Retail', companies:[
+        {t:'WMT', kr:'월마트', en:'Walmart', desc:'세계 최대 규모의 오프라인·온라인 유통 회사', tags:[]},
+        {t:'COST', kr:'코스트코', en:'Costco', desc:'회원제 창고형 할인매장을 운영하는 유통 회사', tags:[]},
+        {t:'KR', kr:'크로거', en:'Kroger', desc:'미국 최대 규모의 슈퍼마켓 체인 회사', tags:[]},
+        {t:'TGT', kr:'타겟', en:'Target', desc:'미국의 대형 종합 유통 체인 회사', tags:[]},
+        {t:'DG', kr:'달러제너럴', en:'Dollar General', desc:'저가 생활용품 중심의 소형 할인점 체인 회사', tags:[]},
+      ]},
+    ]},
+    {kr:'식음료·담배', en:'Food, Beverage & Tobacco', industries:[
+      {kr:'음료', en:'Beverages', companies:[
+        {t:'KO', kr:'코카콜라', en:'Coca-Cola', desc:'세계 최대 음료 브랜드 회사', tags:[]},
+        {t:'PEP', kr:'펩시코', en:'PepsiCo', desc:'음료와 스낵을 함께 생산하는 소비재 회사', tags:[]},
+        {t:'MNST', kr:'몬스터베버리지', en:'Monster Beverage', desc:'에너지 음료 전문 브랜드 회사', tags:[]},
+        {t:'KDP', kr:'큐리그닥터페퍼', en:'Keurig Dr Pepper', desc:'커피캡슐과 탄산음료를 함께 만드는 음료 회사', tags:[]},
+        {t:'STZ', kr:'컨스텔레이션브랜즈', en:'Constellation Brands', desc:'맥주·와인·증류주를 수입·유통하는 주류 회사', tags:[]},
+      ]},
+      {kr:'식품', en:'Food Products', companies:[
+        {t:'MDLZ', kr:'몬델리즈인터내셔널', en:'Mondelez International', desc:'오레오 등 과자·스낵을 만드는 식품회사', tags:[]},
+        {t:'GIS', kr:'제너럴밀스', en:'General Mills', desc:'시리얼 등 포장 식품을 만드는 회사', tags:[]},
+        {t:'HSY', kr:'허쉬', en:'Hershey', desc:'미국 대표 초콜릿·제과 브랜드 회사', tags:[]},
+        {t:'KHC', kr:'크래프트하인즈', en:'Kraft Heinz', desc:'케첩 등 가공식품을 만드는 대형 식품회사', tags:[]},
+        {t:'K', kr:'켈라노바', en:'Kellanova', desc:'시리얼·스낵을 만드는 식품회사', tags:[]},
+      ]},
+      {kr:'담배', en:'Tobacco', companies:[
+        {t:'PM', kr:'필립모리스인터내셔널', en:'Philip Morris International', desc:'미국 외 지역의 담배·전자담배 제품 회사', tags:[]},
+        {t:'MO', kr:'알트리아그룹', en:'Altria Group', desc:'미국 내 담배·니코틴 제품을 판매하는 회사', tags:[]},
+        {t:'BTI', kr:'브리티시아메리칸토바코', en:'British American Tobacco', desc:'영국계 글로벌 담배회사(미국 상장 ADR)', tags:[]},
+        {t:'VGR', kr:'벡터그룹', en:'Vector Group', desc:'저가 담배 브랜드를 보유한 미국 담배회사', tags:[]},
+        {t:'UVV', kr:'유니버설코퍼레이션', en:'Universal Corporation', desc:'담뱃잎을 유통하는 글로벌 원료 공급 회사', tags:[]},
+      ]},
+    ]},
+    {kr:'생활·개인용품', en:'Household & Personal Products', industries:[
+      {kr:'생활용품', en:'Household Products', companies:[
+        {t:'PG', kr:'P&G', en:'Procter & Gamble', desc:'세제·생활용품을 만드는 소비재 회사', tags:[]},
+        {t:'CL', kr:'콜게이트파몰리브', en:'Colgate-Palmolive', desc:'치약·비누 등 생활용품을 만드는 회사', tags:[]},
+        {t:'KMB', kr:'킴벌리클라크', en:'Kimberly-Clark', desc:'화장지·기저귀 등 위생용품을 만드는 회사', tags:[]},
+        {t:'CHD', kr:'처치앤드와이트', en:'Church & Dwight', desc:'암앤해머 등 생활용품 브랜드를 보유한 회사', tags:[]},
+        {t:'CLX', kr:'클로락스', en:'Clorox', desc:'표백제·청소용품을 만드는 생활용품 회사', tags:[]},
+      ]},
+      {kr:'개인용품', en:'Personal Care Products', companies:[
+        {t:'EL', kr:'에스티로더', en:'Estée Lauder', desc:'화장품·향수를 만드는 글로벌 뷰티 회사', tags:[]},
+        {t:'COTY', kr:'코티', en:'Coty', desc:'향수·색조 화장품을 만드는 뷰티 회사', tags:[]},
+        {t:'KVUE', kr:'켄뷰', en:'Kenvue', desc:'존슨즈베이비 등 소비자 헬스케어 브랜드 회사', tags:[]},
+        {t:'ELF', kr:'엘프뷰티', en:'e.l.f. Beauty', desc:'가성비 색조 화장품 브랜드 회사', tags:[]},
+        {t:'IPAR', kr:'인터파르팜즈', en:'Inter Parfums', desc:'라이선스 향수를 제조·유통하는 회사', tags:[]},
+      ]},
+    ]},
+  ]},
+  {id:'fin', kr:'금융', en:'Financials', color:'#3D6FA8', etfs:[
+    {t:'XLF', kr:'파이낸셜 셀렉트 섹터 SPDR 펀드', en:'Financial Select Sector SPDR Fund', desc:'S&P500 내 금융 섹터 전체에 분산투자하는 ETF'},
+    {t:'VFH', kr:'뱅가드 금융 ETF', en:'Vanguard Financials ETF', desc:'금융 섹터에 저비용으로 분산투자하는 뱅가드 ETF'},
+    {t:'FNCL', kr:'피델리티 MSCI 금융 ETF', en:'Fidelity MSCI Financials ETF', desc:'MSCI 금융 지수를 추종하는 ETF'},
+  ], groups:[
+    {kr:'은행', en:'Banks', industries:[
+      {kr:'은행', en:'Banks', companies:[
+        {t:'JPM', kr:'JP모건체이스', en:'JPMorgan Chase', desc:'미국 최대 규모의 종합 은행지주회사', tags:[]},
+        {t:'BAC', kr:'뱅크오브아메리카', en:'Bank of America', desc:'미국 대형 상업은행 중 하나', tags:[]},
+        {t:'WFC', kr:'웰스파고', en:'Wells Fargo', desc:'미국의 대형 소매·상업은행 회사', tags:[]},
+        {t:'C', kr:'씨티그룹', en:'Citigroup', desc:'글로벌 네트워크를 갖춘 대형 은행지주회사', tags:[]},
+        {t:'USB', kr:'US뱅코프', en:'U.S. Bancorp', desc:'미국 중서부 중심의 대형 지역은행 회사', tags:[]},
+      ]},
+    ]},
+    {kr:'금융서비스', en:'Financial Services', industries:[
+      {kr:'금융서비스(다각화)', en:'Financial Services', companies:[
+        {t:'V', kr:'비자', en:'Visa', desc:'전 세계 카드 결제 네트워크를 운영하는 회사', tags:[]},
+        {t:'MA', kr:'마스터카드', en:'Mastercard', desc:'비자와 함께 양대 카드 결제 네트워크를 운영하는 회사', tags:[]},
+        {t:'GS', kr:'골드만삭스', en:'Goldman Sachs', desc:'글로벌 투자은행·자산관리 회사', tags:[]},
+        {t:'BX', kr:'블랙스톤', en:'Blackstone', desc:'세계 최대 규모의 대체투자·사모펀드 운용사', tags:[]},
+        {t:'SPGI', kr:'S&P글로벌', en:'S&P Global', desc:'신용평가·금융지수(S&P500 등)를 만드는 회사', tags:[]},
+      ]},
+      {kr:'소비자금융', en:'Consumer Finance', companies:[
+        {t:'AXP', kr:'아메리칸익스프레스', en:'American Express', desc:'프리미엄 신용카드·여행 서비스 회사', tags:[]},
+        {t:'COF', kr:'캐피탈원파이낸셜', en:'Capital One Financial', desc:'신용카드·소비자대출 중심의 금융회사', tags:[]},
+        {t:'DFS', kr:'디스커버파이낸셜서비스', en:'Discover Financial Services', desc:'신용카드와 자체 결제 네트워크를 운영하는 회사', tags:[]},
+        {t:'SYF', kr:'신크로니파이낸셜', en:'Synchrony Financial', desc:'매장 제휴 신용카드를 전문으로 하는 금융회사', tags:[]},
+        {t:'ALLY', kr:'앨리파이낸셜', en:'Ally Financial', desc:'자동차 할부금융 중심의 디지털 금융회사', tags:[]},
+      ]},
+    ]},
+    {kr:'보험', en:'Insurance', industries:[
+      {kr:'보험', en:'Insurance', companies:[
+        {t:'BRK.B', kr:'버크셔 해서웨이', en:'Berkshire Hathaway', desc:'워런 버핏이 이끄는 보험·투자 지주회사', tags:[]},
+        {t:'PGR', kr:'프로그레시브', en:'Progressive', desc:'자동차 보험 중심의 대형 손해보험 회사', tags:[]},
+        {t:'CB', kr:'처브', en:'Chubb', desc:'글로벌 손해보험을 다루는 대형 보험회사', tags:[]},
+        {t:'TRV', kr:'트래블러스컴퍼니스', en:'Travelers Companies', desc:'재산·상해보험을 전문으로 하는 보험회사', tags:[]},
+        {t:'AIG', kr:'AIG', en:'American International Group', desc:'글로벌 종합보험 서비스를 제공하는 회사', tags:[]},
+      ]},
+    ]},
+  ]},
+  {id:'health', kr:'헬스케어', en:'Health Care', color:'#B24D6B', etfs:[
+    {t:'XLV', kr:'헬스 케어 셀렉트 섹터 SPDR 펀드', en:'Health Care Select Sector SPDR Fund', desc:'S&P500 내 헬스케어 섹터 전체에 분산투자하는 ETF'},
+    {t:'VHT', kr:'뱅가드 헬스케어 ETF', en:'Vanguard Health Care ETF', desc:'헬스케어 섹터에 저비용으로 분산투자하는 뱅가드 ETF'},
+    {t:'FHLC', kr:'피델리티 MSCI 헬스케어 ETF', en:'Fidelity MSCI Health Care ETF', desc:'MSCI 헬스케어 지수를 추종하는 ETF'},
+  ], groups:[
+    {kr:'헬스케어 장비·서비스', en:'Health Care Equipment & Services', industries:[
+      {kr:'헬스케어 장비·용품', en:'Health Care Equipment & Supplies', companies:[
+        {t:'ISRG', kr:'인튜이티브서지컬', en:'Intuitive Surgical', desc:'수술 로봇 \'다빈치\'를 만드는 의료기기 회사', tags:['피지컬AI','로봇'], chains:{ai:'피지컬AI', robot:'응용'}},
+        {t:'MDT', kr:'메드트로닉', en:'Medtronic', desc:'심장·척추 등에 쓰이는 의료기기를 만드는 회사', tags:[]},
+        {t:'SYK', kr:'스트라이커', en:'Stryker', desc:'정형외과·수술 장비를 만드는 의료기기 회사', tags:[]},
+        {t:'BSX', kr:'보스턴사이언티픽', en:'Boston Scientific', desc:'심혈관·비뇨기용 의료기기를 만드는 회사', tags:[]},
+        {t:'ABT', kr:'애보트래보러토리스', en:'Abbott Laboratories', desc:'진단기기와 의료기기를 함께 만드는 헬스케어 회사', tags:[]},
+      ]},
+      {kr:'헬스케어 서비스', en:'Health Care Providers & Services', companies:[
+        {t:'UNH', kr:'유나이티드헬스그룹', en:'UnitedHealth Group', desc:'미국 최대 규모의 민간 건강보험 회사', tags:[]},
+        {t:'CVS', kr:'CVS헬스', en:'CVS Health', desc:'약국 체인과 건강보험을 함께 운영하는 회사', tags:[]},
+        {t:'ELV', kr:'엘레번스헬스', en:'Elevance Health', desc:'대형 민간 건강보험 회사', tags:[]},
+        {t:'CI', kr:'시그나그룹', en:'Cigna Group', desc:'건강보험과 약제서비스를 운영하는 회사', tags:[]},
+        {t:'HCA', kr:'HCA헬스케어', en:'HCA Healthcare', desc:'미국 최대 규모의 민간 병원 운영 회사', tags:[]},
+      ]},
+    ]},
+    {kr:'제약·바이오·생명과학', en:'Pharmaceuticals, Biotechnology & Life Sciences', industries:[
+      {kr:'제약', en:'Pharmaceuticals', companies:[
+        {t:'LLY', kr:'일라이릴리', en:'Eli Lilly', desc:'비만·당뇨 치료제로 성장 중인 대형 제약회사', tags:[]},
+        {t:'JNJ', kr:'존슨앤드존슨', en:'Johnson & Johnson', desc:'제약과 의료기기를 함께 다루는 헬스케어 회사', tags:[]},
+        {t:'ABBV', kr:'애브비', en:'AbbVie', desc:'면역질환·항암제 중심의 제약회사', tags:[]},
+        {t:'PFE', kr:'화이자', en:'Pfizer', desc:'백신·신약을 개발하는 글로벌 제약회사', tags:[]},
+        {t:'MRK', kr:'머크', en:'Merck & Co.', desc:'항암제·백신을 개발하는 글로벌 제약회사', tags:[]},
+      ]},
+      {kr:'생명공학', en:'Biotechnology', companies:[
+        {t:'AMGN', kr:'암젠', en:'Amgen', desc:'바이오의약품 중심의 생명공학 회사', tags:[]},
+        {t:'VRTX', kr:'버텍스파마슈티컬스', en:'Vertex Pharmaceuticals', desc:'희귀질환 치료제를 개발하는 생명공학 회사', tags:[]},
+        {t:'GILD', kr:'길리어드사이언스', en:'Gilead Sciences', desc:'항바이러스제 중심의 생명공학 회사', tags:[]},
+        {t:'REGN', kr:'리제네론파마슈티컬스', en:'Regeneron Pharmaceuticals', desc:'안과·면역질환 신약을 개발하는 생명공학 회사', tags:[]},
+        {t:'BIIB', kr:'바이오젠', en:'Biogen', desc:'신경질환 치료제를 개발하는 생명공학 회사', tags:[]},
+      ]},
+      {kr:'생명과학 도구·서비스', en:'Life Sciences Tools & Services', companies:[
+        {t:'TMO', kr:'써모피셔사이언티픽', en:'Thermo Fisher Scientific', desc:'실험·연구용 장비와 시약을 공급하는 회사', tags:[]},
+        {t:'DHR', kr:'다나허', en:'Danaher', desc:'생명과학·진단 장비를 만드는 복합 기업', tags:[]},
+        {t:'A', kr:'애질런트테크놀로지스', en:'Agilent Technologies', desc:'분석·진단용 실험장비를 만드는 회사', tags:[]},
+        {t:'IQV', kr:'아이큐비아홀딩스', en:'IQVIA Holdings', desc:'신약 임상시험을 대행하는 연구서비스 회사', tags:[]},
+        {t:'MTD', kr:'메틀러톨레도', en:'Mettler-Toledo', desc:'정밀 저울·계측 장비를 만드는 회사', tags:[]},
+      ]},
+    ]},
+  ]},
+  {id:'ind', kr:'산업재', en:'Industrials', color:'#6B7280', etfs:[
+    {t:'XLI', kr:'인더스트리얼 셀렉트 섹터 SPDR 펀드', en:'Industrial Select Sector SPDR Fund', desc:'S&P500 내 산업재 섹터 전체에 분산투자하는 ETF'},
+    {t:'VIS', kr:'뱅가드 산업재 ETF', en:'Vanguard Industrials ETF', desc:'산업재 섹터에 저비용으로 분산투자하는 뱅가드 ETF'},
+    {t:'FIDU', kr:'피델리티 MSCI 산업재 ETF', en:'Fidelity MSCI Industrials ETF', desc:'MSCI 산업재 지수를 추종하는 ETF'},
+  ], groups:[
+    {kr:'자본재', en:'Capital Goods', industries:[
+      {kr:'항공우주·방위', en:'Aerospace & Defense', companies:[
+        {t:'GE', kr:'GE에어로스페이스', en:'GE Aerospace', desc:'항공기 엔진을 설계·제조하는 항공산업 회사', tags:[]},
+        {t:'RTX', kr:'RTX', en:'RTX Corporation', desc:'항공엔진과 방위산업 제품을 만드는 회사', tags:[]},
+        {t:'BA', kr:'보잉', en:'Boeing', desc:'여객기·방위산업 항공기를 만드는 제조회사', tags:[]},
+        {t:'LMT', kr:'록히드마틴', en:'Lockheed Martin', desc:'전투기·미사일 등을 만드는 방위산업 회사', tags:[]},
+        {t:'NOC', kr:'노스럽그루먼', en:'Northrop Grumman', desc:'스텔스기·우주 방산 장비를 만드는 회사', tags:[]},
+        {t:'BWXT', kr:'BWX테크놀로지스', en:'BWX Technologies', desc:'해군 원자로 등 원자력 부품·설비를 만드는 회사', tags:[], chains:{nuclear:'기자재·건설'}},
+      ]},
+      {kr:'기계', en:'Machinery', companies:[
+        {t:'CAT', kr:'캐터필러', en:'Caterpillar', desc:'건설·광산용 중장비를 만드는 회사', tags:[]},
+        {t:'DE', kr:'디어앤컴퍼니', en:'Deere & Company', desc:'농기계·건설장비를 만드는 회사', tags:[]},
+        {t:'PCAR', kr:'팩카', en:'PACCAR', desc:'대형 트럭을 만드는 상용차 제조회사', tags:[]},
+        {t:'CMI', kr:'커민스', en:'Cummins', desc:'디젤·발전용 대형 엔진을 만드는 회사', tags:[]},
+        {t:'PH', kr:'파커하니핀', en:'Parker Hannifin', desc:'산업용 유압·공압 부품을 만드는 회사', tags:[]},
+        {t:'SYM', kr:'심보틱', en:'Symbotic', desc:'물류창고용 로봇 자동화 시스템을 만드는 회사', tags:['피지컬AI','로봇'], chains:{robot:'로봇 제조'}},
+      ]},
+      {kr:'전기장비', en:'Electrical Equipment', companies:[
+        {t:'VRT', kr:'버티브', en:'Vertiv', desc:'데이터센터용 전력·냉각 인프라 장비를 만드는 회사', tags:['AI인프라','데이터센터'], chains:{ai:'인프라'}},
+        {t:'ETN', kr:'이튼', en:'Eaton', desc:'전력관리·전기장비를 만드는 회사', tags:['AI인프라']},
+        {t:'EMR', kr:'에머슨일렉트릭', en:'Emerson Electric', desc:'산업 자동화·전기장비를 만드는 회사', tags:[]},
+        {t:'ROK', kr:'록웰오토메이션', en:'Rockwell Automation', desc:'공장 자동화·산업용 로봇 제어 시스템 회사', tags:['피지컬AI','로봇'], chains:{robot:'부품'}},
+        {t:'AME', kr:'아메텍', en:'AMETEK', desc:'전자 계측·전기 장비를 만드는 회사', tags:[]},
+      ]},
+      {kr:'산업 복합기업', en:'Industrial Conglomerates', companies:[
+        {t:'HON', kr:'허니웰', en:'Honeywell', desc:'산업 자동화·항공전자 제품을 만드는 회사', tags:[]},
+        {t:'MMM', kr:'3M', en:'3M', desc:'산업·소비재 전반에 걸쳐 다양한 제품을 만드는 복합기업', tags:[]},
+        {t:'ROP', kr:'로퍼테크놀로지스', en:'Roper Technologies', desc:'산업용 소프트웨어·계측기를 보유한 복합기업', tags:[]},
+        {t:'DOV', kr:'도버코퍼레이션', en:'Dover Corporation', desc:'산업 장비 전반을 제조하는 복합기업', tags:[]},
+        {t:'XYL', kr:'자일럼', en:'Xylem', desc:'수처리·물 관리 장비를 만드는 산업재 회사', tags:[]},
+      ]},
+    ]},
+    {kr:'상업·전문서비스', en:'Commercial & Professional Services', industries:[
+      {kr:'상업서비스·용품', en:'Commercial Services & Supplies', companies:[
+        {t:'WM', kr:'웨이스트매니지먼트', en:'Waste Management', desc:'폐기물 수거·처리를 담당하는 환경 서비스 회사', tags:[]},
+        {t:'RSG', kr:'리퍼블릭서비시스', en:'Republic Services', desc:'폐기물 수거·재활용 서비스를 제공하는 회사', tags:[]},
+        {t:'CTAS', kr:'신타스', en:'Cintas', desc:'기업용 유니폼·시설관리 서비스를 제공하는 회사', tags:[]},
+        {t:'PAYX', kr:'페이첵스', en:'Paychex', desc:'중소기업 대상 급여·인사 아웃소싱 회사', tags:[]},
+        {t:'VRSK', kr:'베리스크애널리틱스', en:'Verisk Analytics', desc:'보험·리스크 관련 데이터 분석 서비스 회사', tags:[]},
+      ]},
+    ]},
+    {kr:'운송', en:'Transportation', industries:[
+      {kr:'지상운송', en:'Ground Transportation', companies:[
+        {t:'UNP', kr:'유니온퍼시픽', en:'Union Pacific', desc:'미국 서부를 잇는 대형 화물철도 회사', tags:[]},
+        {t:'CSX', kr:'CSX', en:'CSX Corporation', desc:'미국 동부를 잇는 대형 화물철도 회사', tags:[]},
+        {t:'NSC', kr:'노퍽서던', en:'Norfolk Southern', desc:'미국 동부 화물철도를 운영하는 회사', tags:[]},
+        {t:'ODFL', kr:'올드도미니언프레이트라인', en:'Old Dominion Freight Line', desc:'화물 트럭운송 전문 물류회사', tags:[]},
+        {t:'JBHT', kr:'JB헌트트랜스포트', en:'J.B. Hunt Transport', desc:'트럭·복합운송 물류 서비스 회사', tags:[]},
+      ]},
+      {kr:'항공화물·물류', en:'Air Freight & Logistics', companies:[
+        {t:'UPS', kr:'UPS', en:'United Parcel Service', desc:'전 세계 택배·물류 배송 서비스 회사', tags:[]},
+        {t:'FDX', kr:'페덱스', en:'FedEx', desc:'전 세계 항공 특송·물류 서비스 회사', tags:[]},
+        {t:'EXPD', kr:'익스피다이터스인터내셔널', en:'Expeditors International', desc:'국제 화물운송을 중개하는 물류회사', tags:[]},
+        {t:'CHRW', kr:'CH로빈슨월드와이드', en:'C.H. Robinson Worldwide', desc:'화물운송 중개 전문 물류회사', tags:[]},
+        {t:'XPO', kr:'XPO', en:'XPO Inc.', desc:'화물 트럭운송·물류 서비스 회사', tags:[]},
+      ]},
+      {kr:'항공사', en:'Airlines', companies:[
+        {t:'DAL', kr:'델타항공', en:'Delta Air Lines', desc:'미국 대형 항공사 중 하나', tags:[]},
+        {t:'UAL', kr:'유나이티드항공홀딩스', en:'United Airlines Holdings', desc:'미국 대형 항공사 중 하나', tags:[]},
+        {t:'AAL', kr:'아메리칸항공그룹', en:'American Airlines Group', desc:'미국 최대 규모의 항공사 중 하나', tags:[]},
+        {t:'LUV', kr:'사우스웨스트항공', en:'Southwest Airlines', desc:'저비용 항공사 모델을 대표하는 미국 항공사', tags:[]},
+        {t:'ALK', kr:'알래스카항공그룹', en:'Alaska Air Group', desc:'미국 서부 중심의 항공사', tags:[]},
+      ]},
+    ]},
+  ]},
+  {id:'energy', kr:'에너지', en:'Energy', color:'#A8572C', etfs:[
+    {t:'XLE', kr:'에너지 셀렉트 섹터 SPDR 펀드', en:'Energy Select Sector SPDR Fund', desc:'S&P500 내 에너지 섹터 전체에 분산투자하는 ETF'},
+    {t:'VDE', kr:'뱅가드 에너지 ETF', en:'Vanguard Energy ETF', desc:'에너지 섹터에 저비용으로 분산투자하는 뱅가드 ETF'},
+    {t:'FENY', kr:'피델리티 MSCI 에너지 ETF', en:'Fidelity MSCI Energy ETF', desc:'MSCI 에너지 지수를 추종하는 ETF'},
+  ], groups:[
+    {kr:'에너지', en:'Energy', industries:[
+      {kr:'석유·가스·연료', en:'Oil, Gas & Consumable Fuels', companies:[
+        {t:'XOM', kr:'엑슨모빌', en:'ExxonMobil', desc:'세계 최대 규모의 석유·가스 기업', tags:[]},
+        {t:'CVX', kr:'셰브론', en:'Chevron', desc:'석유·가스 탐사와 정제를 함께 하는 에너지 기업', tags:[]},
+        {t:'COP', kr:'코노코필립스', en:'ConocoPhillips', desc:'원유·천연가스 탐사·생산에 집중하는 에너지 기업', tags:[]},
+        {t:'EOG', kr:'EOG리소시스', en:'EOG Resources', desc:'북미 셰일 원유·가스를 개발하는 에너지 기업', tags:[]},
+        {t:'MPC', kr:'마라톤페트롤리엄', en:'Marathon Petroleum', desc:'원유를 정제해 석유제품을 판매하는 정유회사', tags:[]},
+      ]},
+      {kr:'에너지 장비·서비스', en:'Energy Equipment & Services', companies:[
+        {t:'SLB', kr:'슐럼버거', en:'SLB', desc:'유전 시추·탐사 장비와 서비스를 제공하는 회사', tags:[]},
+        {t:'HAL', kr:'할리버튼', en:'Halliburton', desc:'유전 개발용 장비·서비스를 제공하는 회사', tags:[]},
+        {t:'BKR', kr:'베이커휴즈', en:'Baker Hughes', desc:'에너지 개발 장비·기술 서비스를 제공하는 회사', tags:[]},
+        {t:'FTI', kr:'테크닙FMC', en:'TechnipFMC', desc:'해양 원유·가스 개발 장비를 만드는 회사', tags:[]},
+        {t:'NOV', kr:'NOV', en:'NOV Inc.', desc:'시추 장비·부품을 만드는 에너지 서비스 회사', tags:[]},
+      ]},
+    ]},
+  ]},
+  {id:'mat', kr:'소재', en:'Materials', color:'#7C6A46', etfs:[
+    {t:'XLB', kr:'머티리얼즈 셀렉트 섹터 SPDR 펀드', en:'Materials Select Sector SPDR Fund', desc:'S&P500 내 소재 섹터 전체에 분산투자하는 ETF'},
+    {t:'VAW', kr:'뱅가드 소재 ETF', en:'Vanguard Materials ETF', desc:'소재 섹터에 저비용으로 분산투자하는 뱅가드 ETF'},
+    {t:'FMAT', kr:'피델리티 MSCI 소재 ETF', en:'Fidelity MSCI Materials ETF', desc:'MSCI 소재 지수를 추종하는 ETF'},
+  ], groups:[
+    {kr:'소재', en:'Materials', industries:[
+      {kr:'화학', en:'Chemicals', companies:[
+        {t:'LIN', kr:'린데', en:'Linde', desc:'산업용 가스를 생산·공급하는 세계 최대 기업', tags:[]},
+        {t:'APD', kr:'에어프로덕츠', en:'Air Products', desc:'산업용·수소 가스를 공급하는 소재 기업', tags:[]},
+        {t:'SHW', kr:'셔윈윌리엄스', en:'Sherwin-Williams', desc:'페인트·도료를 만드는 소재 기업', tags:[]},
+        {t:'ECL', kr:'에코랩', en:'Ecolab', desc:'산업용 수처리·위생 화학제품을 만드는 회사', tags:[]},
+        {t:'DD', kr:'듀폰드느무르', en:'DuPont de Nemours', desc:'첨단 소재·화학제품을 만드는 회사', tags:[]},
+        {t:'ALB', kr:'앨버말', en:'Albemarle', desc:'배터리 원료인 리튬을 채굴·가공하는 세계 최대 리튬 생산 회사', tags:[], chains:{battery:'원재료'}},
+      ]},
+      {kr:'금속·광업', en:'Metals & Mining', companies:[
+        {t:'FCX', kr:'프리포트맥모란', en:'Freeport-McMoRan', desc:'구리·금을 채굴하는 세계적 광산 기업', tags:[]},
+        {t:'NEM', kr:'뉴몬트', en:'Newmont', desc:'세계 최대 규모의 금 채굴 회사', tags:[]},
+        {t:'NUE', kr:'뉴코', en:'Nucor', desc:'미국 최대 규모의 철강 생산 회사', tags:[]},
+        {t:'STLD', kr:'스틸다이내믹스', en:'Steel Dynamics', desc:'전기로 방식의 철강 생산 회사', tags:[]},
+        {t:'AA', kr:'알코아', en:'Alcoa', desc:'알루미늄을 생산하는 세계적 금속기업', tags:[]},
+        {t:'CCJ', kr:'카메코', en:'Cameco', desc:'원자력 발전 연료로 쓰이는 우라늄을 채굴하는 세계 최대 우라늄 생산 회사', tags:[], chains:{nuclear:'연료'}},
+      ]},
+    ]},
+  ]},
+  {id:'util', kr:'유틸리티', en:'Utilities', color:'#4B8C8C', etfs:[
+    {t:'XLU', kr:'유틸리티스 셀렉트 섹터 SPDR 펀드', en:'Utilities Select Sector SPDR Fund', desc:'S&P500 내 유틸리티 섹터 전체에 분산투자하는 ETF'},
+    {t:'VPU', kr:'뱅가드 유틸리티 ETF', en:'Vanguard Utilities ETF', desc:'유틸리티 섹터에 저비용으로 분산투자하는 뱅가드 ETF'},
+    {t:'FUTY', kr:'피델리티 MSCI 유틸리티 ETF', en:'Fidelity MSCI Utilities ETF', desc:'MSCI 유틸리티 지수를 추종하는 ETF'},
+  ], groups:[
+    {kr:'유틸리티', en:'Utilities', industries:[
+      {kr:'전력회사', en:'Electric Utilities', companies:[
+        {t:'NEE', kr:'넥스트에라에너지', en:'NextEra Energy', desc:'풍력·태양광 등 신재생 발전 비중이 큰 전력회사', tags:[], chains:{nuclear:'발전·공급'}},
+        {t:'SO', kr:'서던컴퍼니', en:'Southern Company', desc:'미국 남부 지역의 전력 공급 회사', tags:[]},
+        {t:'D', kr:'도미니언에너지', en:'Dominion Energy', desc:'미국 동부 지역의 전력·가스 공급 회사', tags:[]},
+        {t:'AEP', kr:'아메리칸일렉트릭파워', en:'American Electric Power', desc:'미국 중부 지역의 대형 전력회사', tags:[]},
+        {t:'EXC', kr:'엑셀론', en:'Exelon', desc:'미국 북동부 지역의 대형 전력회사', tags:[]},
+      ]},
+      {kr:'복합유틸리티', en:'Multi-Utilities', companies:[
+        {t:'DUK', kr:'듀크에너지', en:'Duke Energy', desc:'전력과 가스를 함께 공급하는 대형 유틸리티 회사', tags:[]},
+        {t:'SRE', kr:'셈프라', en:'Sempra', desc:'전력·LNG 사업을 함께 운영하는 에너지 인프라 회사', tags:[]},
+        {t:'PEG', kr:'퍼블릭서비스엔터프라이즈그룹', en:'Public Service Enterprise Group', desc:'뉴저지 지역의 전력·가스 공급 회사', tags:[]},
+        {t:'WEC', kr:'WEC에너지그룹', en:'WEC Energy Group', desc:'미국 중서부 지역의 전력·가스 공급 회사', tags:[]},
+        {t:'ED', kr:'콘솔리데이티드에디슨', en:'Consolidated Edison', desc:'뉴욕시 지역의 전력·가스 공급 회사', tags:[]},
+      ]},
+      {kr:'독립전력·신재생', en:'Independent Power & Renewable Electricity Producers', companies:[
+        {t:'CEG', kr:'컨스텔레이션에너지', en:'Constellation Energy', desc:'원자력 발전 비중이 크며 데이터센터에 전력을 공급하는 회사', tags:['AI인프라','데이터센터'], chains:{ai:'인프라', nuclear:'발전·공급'}},
+        {t:'VST', kr:'비스트라', en:'Vistra Corp', desc:'발전소를 운영하며 데이터센터 전력 수요 확대의 수혜주로 꼽히는 회사', tags:['AI인프라','데이터센터'], chains:{ai:'인프라', nuclear:'발전·공급'}},
+        {t:'NRG', kr:'NRG에너지', en:'NRG Energy', desc:'발전·소매 전력판매를 함께 하는 독립전력 회사', tags:['AI인프라']},
+        {t:'AES', kr:'AES코퍼레이션', en:'AES Corporation', desc:'신재생에너지 발전 비중이 큰 독립전력 회사', tags:[]},
+        {t:'ORA', kr:'오맷테크놀로지스', en:'Ormat Technologies', desc:'지열발전 전문 신재생에너지 회사', tags:[]},
+      ]},
+    ]},
+  ]},
+  {id:'re', kr:'부동산', en:'Real Estate', color:'#9C7A3C', etfs:[
+    {t:'XLRE', kr:'리얼 에스테이트 셀렉트 섹터 SPDR 펀드', en:'Real Estate Select Sector SPDR Fund', desc:'S&P500 내 부동산 섹터 리츠 전체에 분산투자하는 ETF'},
+    {t:'VNQ', kr:'뱅가드 리얼 에스테이트 ETF', en:'Vanguard Real Estate ETF', desc:'부동산 리츠 섹터에 저비용으로 분산투자하는 뱅가드 ETF'},
+    {t:'FREL', kr:'피델리티 MSCI 부동산 ETF', en:'Fidelity MSCI Real Estate ETF', desc:'MSCI 부동산 지수를 추종하는 ETF'},
+  ], groups:[
+    {kr:'리츠(REITs)', en:'Equity Real Estate Investment Trusts', industries:[
+      {kr:'특수 리츠', en:'Specialized REITs', companies:[
+        {t:'EQIX', kr:'에퀴닉스', en:'Equinix', desc:'전 세계 데이터센터를 임대·운영하는 데이터센터 리츠', tags:['클라우드','데이터센터'], chains:{ai:'데이터센터'}},
+        {t:'DLR', kr:'디지털리얼티', en:'Digital Realty', desc:'데이터센터 부동산을 임대·운영하는 리츠 회사', tags:['데이터센터'], chains:{ai:'데이터센터'}},
+        {t:'AMT', kr:'아메리칸타워', en:'American Tower', desc:'통신용 안테나 타워를 임대하는 통신 인프라 리츠', tags:['인프라']},
+        {t:'SBAC', kr:'SBA커뮤니케이션즈', en:'SBA Communications', desc:'통신용 타워를 임대하는 통신 인프라 리츠', tags:['인프라']},
+        {t:'CCI', kr:'크라운캐슬', en:'Crown Castle', desc:'통신 타워·인프라를 임대하는 리츠 회사', tags:['인프라']},
+      ]},
+      {kr:'산업용 리츠', en:'Industrial REITs', companies:[
+        {t:'PLD', kr:'프로로지스', en:'Prologis', desc:'물류창고를 임대하는 세계 최대 물류 리츠', tags:[]},
+        {t:'EXR', kr:'엑스트라스페이스스토리지', en:'Extra Space Storage', desc:'셀프스토리지 창고를 운영하는 리츠 회사', tags:[]},
+        {t:'PSA', kr:'퍼블릭스토리지', en:'Public Storage', desc:'세계 최대 규모의 셀프스토리지 리츠 회사', tags:[]},
+        {t:'FR', kr:'퍼스트인더스트리얼리얼티트러스트', en:'First Industrial Realty Trust', desc:'물류·산업용 부동산을 임대하는 리츠 회사', tags:[]},
+        {t:'REXR', kr:'렉스포드인더스트리얼리얼티', en:'Rexford Industrial Realty', desc:'남가주 지역 물류창고를 임대하는 리츠 회사', tags:[]},
+      ]},
+      {kr:'주거용 리츠', en:'Residential REITs', companies:[
+        {t:'AVB', kr:'아발론베이커뮤니티스', en:'AvalonBay Communities', desc:'아파트 등 임대주택을 운영하는 주거용 리츠', tags:[]},
+        {t:'EQR', kr:'에퀴티레지덴셜', en:'Equity Residential', desc:'대도시 임대아파트를 운영하는 주거용 리츠', tags:[]},
+        {t:'ESS', kr:'에섹스프로퍼티트러스트', en:'Essex Property Trust', desc:'서부해안 지역 임대아파트를 운영하는 리츠 회사', tags:[]},
+        {t:'MAA', kr:'미드아메리카아파트먼트커뮤니티스', en:'Mid-America Apartment Communities', desc:'남동부 지역 임대아파트를 운영하는 리츠 회사', tags:[]},
+        {t:'INVH', kr:'인비테이션홈스', en:'Invitation Homes', desc:'단독주택을 임대하는 주거용 리츠 회사', tags:[]},
+      ]},
+    ]},
+    {kr:'부동산 관리·개발', en:'Real Estate Management & Development', industries:[
+      {kr:'부동산 관리·개발', en:'Real Estate Management & Development', companies:[
+        {t:'CBRE', kr:'CBRE그룹', en:'CBRE Group', desc:'상업용 부동산 중개·자산관리 서비스를 제공하는 회사', tags:[]},
+        {t:'JLL', kr:'존스랑라살', en:'Jones Lang LaSalle', desc:'상업용 부동산 서비스·투자관리 회사', tags:[]},
+        {t:'CWK', kr:'쿠시먼앤드웨이크필드', en:'Cushman & Wakefield', desc:'상업용 부동산 중개·자문 서비스 회사', tags:[]},
+        {t:'NMRK', kr:'뉴마크그룹', en:'Newmark Group', desc:'상업용 부동산 중개·자문 서비스 회사', tags:[]},
+        {t:'CIGI', kr:'콜리어스인터내셔널', en:'Colliers International', desc:'상업용 부동산 서비스·투자관리 회사', tags:[]},
+      ]},
+    ]},
+  ]},
+];
+
+const SECTORS_KR = [
+  {id:'it', kr:'정보기술', en:'Information Technology', color:'#2E6F63', etfs:[
+    {t:'091160', kr:'KODEX 반도체', en:'KODEX Semiconductor', desc:'국내 반도체 관련 기업에 분산투자하는 ETF'},
+    {t:'139260', kr:'TIGER 200 IT', en:'TIGER 200 IT', desc:'코스피200 내 IT 섹터 기업에 분산투자하는 ETF'},
+    {t:'396500', kr:'TIGER Fn반도체TOP10', en:'TIGER Fn Semiconductor TOP10', desc:'국내 반도체 대표 기업 상위 10곳에 집중투자하는 ETF'},
+  ], groups:[
+    {kr:'반도체', en:'Semiconductors & Semiconductor Equipment', industries:[
+      {kr:'반도체', en:'Semiconductors', companies:[
+        {t:'005930', kr:'삼성전자', en:'Samsung Electronics', desc:'메모리(D램·낸드)부터 파운드리까지 아우르는 종합 반도체·전자 회사', tags:['AI하드웨어','반도체'], chains:{ai:'하드웨어'}},
+        {t:'000660', kr:'SK하이닉스', en:'SK Hynix', desc:'AI 서버에 쓰이는 고대역폭메모리(HBM)로 주목받는 메모리 반도체 회사', tags:['AI하드웨어','반도체'], chains:{ai:'하드웨어'}},
+        {t:'000990', kr:'DB하이텍', en:'DB HiTek', desc:'아날로그·파워 반도체를 위탁생산하는 파운드리 회사', tags:['반도체']},
+        {t:'402340', kr:'SK스퀘어', en:'SK Square', desc:'SK하이닉스 지분을 보유한 반도체·ICT 투자 지주회사', tags:['반도체']},
+        {t:'054450', kr:'텔레칩스', en:'Telechips', desc:'차량용 인포테인먼트 반도체를 설계하는 팹리스 회사', tags:['반도체']},
+      ]},
+      {kr:'반도체 장비·소재', en:'Semiconductor Materials & Equipment', companies:[
+        {t:'240810', kr:'원익IPS', en:'Wonik IPS', desc:'반도체 증착·식각 공정 장비를 만드는 회사', tags:['반도체장비']},
+        {t:'140860', kr:'파크시스템스', en:'Park Systems', desc:'반도체 계측에 쓰이는 원자현미경(AFM) 장비 회사', tags:['반도체장비']},
+        {t:'067310', kr:'하나마이크론', en:'Hana Micron', desc:'반도체 패키징·테스트를 전문으로 하는 회사', tags:['반도체장비']},
+        {t:'042700', kr:'한미반도체', en:'Hanmi Semiconductor', desc:'HBM 패키징에 쓰이는 TC본더 장비로 주목받는 회사', tags:['반도체장비','AI하드웨어']},
+        {t:'058470', kr:'리노공업', en:'Leeno Industrial', desc:'반도체 테스트용 소켓·프로브를 만드는 회사', tags:['반도체장비']},
+      ]},
+    ]},
+    {kr:'소프트웨어·서비스', en:'Software & Services', industries:[
+      {kr:'IT서비스·소프트웨어', en:'IT Services & Software', companies:[
+        {t:'018260', kr:'삼성SDS', en:'Samsung SDS', desc:'그룹 IT 시스템 구축과 물류 IT를 함께하는 서비스 회사', tags:[]},
+        {t:'012510', kr:'더존비즈온', en:'Douzone Bizon', desc:'중소기업용 회계·ERP 소프트웨어를 만드는 회사', tags:['소프트웨어']},
+        {t:'030520', kr:'한글과컴퓨터', en:'Hancom', desc:'한컴오피스를 만드는 국내 대표 소프트웨어 회사', tags:['소프트웨어']},
+        {t:'053800', kr:'안랩', en:'AhnLab', desc:'백신 프로그램 등 보안 소프트웨어를 만드는 회사', tags:['보안'], chains:{ai:'보안'}},
+        {t:'181710', kr:'NHN', en:'NHN Corporation', desc:'게임·결제·클라우드 등을 함께하는 IT서비스 회사', tags:[]},
+      ]},
+    ]},
+    {kr:'기술 하드웨어·부품', en:'Technology Hardware & Equipment', industries:[
+      {kr:'전자장비·부품', en:'Electronic Equipment & Components', companies:[
+        {t:'011070', kr:'LG이노텍', en:'LG Innotek', desc:'카메라모듈 등 정밀 전자부품을 만드는 회사', tags:[]},
+        {t:'009150', kr:'삼성전기', en:'Samsung Electro-Mechanics', desc:'적층세라믹콘덴서(MLCC) 등 전자부품을 만드는 회사', tags:[]},
+        {t:'090460', kr:'비에이치', en:'BH Co.', desc:'스마트폰용 연성회로기판(FPCB)을 만드는 회사', tags:[]},
+        {t:'353200', kr:'대덕전자', en:'Daeduck Electronics', desc:'인쇄회로기판(PCB)을 만드는 전자부품 회사', tags:[]},
+        {t:'222800', kr:'심텍', en:'Simmtech', desc:'반도체용 기판(PCB)을 만드는 전자부품 회사', tags:['반도체장비']},
+        {t:'006400', kr:'삼성SDI', en:'Samsung SDI', desc:'전기차·ESS용 배터리 셀을 만드는 국내 대표 배터리 회사', tags:[], chains:{battery:'셀 제조'}},
+      ]},
+    ]},
+  ]},
+  {id:'comm', kr:'커뮤니케이션서비스', en:'Communication Services', color:'#6C5B9E', etfs:[
+    {t:'315270', kr:'TIGER 200 커뮤니케이션서비스', en:'TIGER 200 Communication Services', desc:'코스피200 내 커뮤니케이션서비스 섹터 기업에 분산투자하는 ETF'},
+    {t:'300610', kr:'TIGER K게임', en:'TIGER K-Game', desc:'국내 게임 산업 테마 기업에 분산투자하는 ETF'},
+    {t:'364990', kr:'TIGER 게임TOP10', en:'TIGER Game TOP10', desc:'국내 게임 대표 기업 상위 10곳에 집중투자하는 ETF'},
+  ], groups:[
+    {kr:'미디어·엔터테인먼트', en:'Media & Entertainment', industries:[
+      {kr:'대화형 미디어·서비스', en:'Interactive Media & Services', companies:[
+        {t:'035420', kr:'네이버', en:'NAVER', desc:'국내 최대 포털·검색과 자체 AI 모델(하이퍼클로바X)을 운영하는 회사', tags:['AI소프트웨어'], chains:{ai:'AI모델·소프트웨어'}},
+        {t:'035720', kr:'카카오', en:'Kakao', desc:'카카오톡을 중심으로 메신저·콘텐츠·핀테크를 운영하는 회사', tags:['AI소프트웨어']},
+        {t:'067160', kr:'숲(SOOP)', en:'SOOP', desc:'실시간 인터넷 방송(옛 아프리카TV)을 운영하는 플랫폼 회사', tags:[]},
+        {t:'376300', kr:'디어유', en:'Dear U', desc:'팬과 아이돌을 잇는 팬덤 플랫폼 \'버블\'을 운영하는 회사', tags:[]},
+        {t:'205100', kr:'커넥트웨이브', en:'Connectwave', desc:'다나와 등 가격비교·이커머스 플랫폼을 운영하는 회사', tags:[]},
+      ]},
+      {kr:'엔터테인먼트', en:'Entertainment', companies:[
+        {t:'352820', kr:'하이브', en:'HYBE', desc:'BTS 등이 소속된 국내 대표 음악 엔터테인먼트 회사', tags:[]},
+        {t:'035760', kr:'CJ ENM', en:'CJ ENM', desc:'방송 콘텐츠 제작과 미디어 플랫폼을 운영하는 회사', tags:[]},
+        {t:'041510', kr:'에스엠', en:'SM Entertainment', desc:'K팝 아이돌을 육성·기획하는 엔터테인먼트 회사', tags:[]},
+        {t:'259960', kr:'크래프톤', en:'Krafton', desc:'배틀그라운드를 만든 국내 대표 게임 회사', tags:[]},
+        {t:'036570', kr:'엔씨소프트', en:'NCsoft', desc:'리니지 시리즈를 만든 국내 대표 게임 회사', tags:[]},
+        {t:'251270', kr:'넷마블', en:'Netmarble', desc:'모바일 게임을 전문으로 하는 국내 대표 게임 회사', tags:[]},
+      ]},
+    ]},
+    {kr:'통신서비스', en:'Telecommunication Services', industries:[
+      {kr:'종합통신서비스', en:'Diversified Telecommunication Services', companies:[
+        {t:'017670', kr:'SK텔레콤', en:'SK Telecom', desc:'국내 1위 이동통신 회사이자 AI 데이터센터 사업도 확대 중인 회사', tags:['인프라','AI인프라']},
+        {t:'030200', kr:'KT', en:'KT Corporation', desc:'유무선 통신과 클라우드·IDC 사업을 함께하는 통신회사', tags:['인프라','데이터센터']},
+        {t:'032640', kr:'LG유플러스', en:'LG Uplus', desc:'이동통신·인터넷 서비스를 제공하는 통신회사', tags:['인프라']},
+      ]},
+    ]},
+  ]},
+  {id:'cdisc', kr:'임의소비재', en:'Consumer Discretionary', color:'#C2703D', etfs:[
+    {t:'139290', kr:'TIGER 200 경기소비재', en:'TIGER 200 Consumer Discretionary', desc:'코스피200 내 경기소비재(임의소비재) 섹터 기업에 분산투자하는 ETF'},
+    {t:'091180', kr:'KODEX 자동차', en:'KODEX Autos', desc:'국내 자동차·부품 대표 기업에 분산투자하는 ETF'},
+  ], groups:[
+    {kr:'자동차·부품', en:'Automobiles & Components', industries:[
+      {kr:'자동차', en:'Automobiles', companies:[
+        {t:'005380', kr:'현대차', en:'Hyundai Motor', desc:'국내 대표 완성차 제조회사', tags:[], chains:{battery:'완성차·ESS'}},
+        {t:'000270', kr:'기아', en:'Kia', desc:'현대차그룹 산하의 완성차 제조회사', tags:[]},
+        {t:'003620', kr:'KG모빌리티', en:'KG Mobility', desc:'SUV 중심의 국내 완성차 제조회사', tags:[]},
+      ]},
+      {kr:'자동차 부품', en:'Auto Components', companies:[
+        {t:'012330', kr:'현대모비스', en:'Hyundai Mobis', desc:'자동차 핵심 부품·모듈을 만드는 부품회사', tags:[]},
+        {t:'011210', kr:'현대위아', en:'Hyundai Wia', desc:'자동차 부품과 공작기계를 만드는 회사', tags:[]},
+        {t:'018880', kr:'한온시스템', en:'Hanon Systems', desc:'자동차 공조·열관리 부품을 만드는 회사', tags:[]},
+        {t:'204320', kr:'만도', en:'Mando', desc:'제동·조향 등 자율주행 관련 자동차 부품을 만드는 회사', tags:[]},
+        {t:'064960', kr:'S&T모티브', en:'S&T Motiv', desc:'자동차용 모터·부품을 만드는 회사', tags:[]},
+      ]},
+    ]},
+    {kr:'내구소비재·의류', en:'Consumer Durables & Apparel', industries:[
+      {kr:'섬유·의류', en:'Textiles, Apparel & Luxury Goods', companies:[
+        {t:'007700', kr:'F&F', en:'F&F', desc:'MLB·디스커버리 브랜드를 운영하는 패션회사', tags:[]},
+        {t:'081660', kr:'휠라홀딩스', en:'Fila Holdings', desc:'휠라 브랜드를 보유한 스포츠 의류 회사', tags:[]},
+        {t:'093050', kr:'LF', en:'LF Corp', desc:'닥스 등 여러 패션 브랜드를 보유한 패션 기업', tags:[]},
+        {t:'111770', kr:'영원무역', en:'Youngone Corporation', desc:'아웃도어 의류를 위탁생산(OEM)하는 회사', tags:[]},
+        {t:'005390', kr:'신성통상', en:'Shinsung Tongsang', desc:'탑텐 브랜드를 보유한 의류 제조·유통 회사', tags:[]},
+      ]},
+    ]},
+  ]},
+  {id:'cstap', kr:'필수소비재', en:'Consumer Staples', color:'#8A9A5B', etfs:[
+    {t:'227560', kr:'TIGER 200 생활소비재', en:'TIGER 200 Consumer Staples', desc:'코스피200 내 생활소비재(필수소비재) 섹터 기업에 분산투자하는 ETF'},
+  ], groups:[
+    {kr:'필수소비재 유통', en:'Consumer Staples Distribution & Retail', industries:[
+      {kr:'필수소비재 유통', en:'Consumer Staples Distribution & Retail', companies:[
+        {t:'139480', kr:'이마트', en:'E-Mart', desc:'국내 대형마트 1위 유통회사', tags:[]},
+        {t:'282330', kr:'BGF리테일', en:'BGF Retail', desc:'CU 편의점을 운영하는 유통회사', tags:[]},
+        {t:'007070', kr:'GS리테일', en:'GS Retail', desc:'GS25 편의점과 슈퍼마켓을 운영하는 유통회사', tags:[]},
+        {t:'023530', kr:'롯데쇼핑', en:'Lotte Shopping', desc:'백화점·마트 등을 운영하는 종합 유통회사', tags:[]},
+        {t:'057050', kr:'현대홈쇼핑', en:'Hyundai Home Shopping', desc:'TV·온라인 홈쇼핑을 운영하는 유통회사', tags:[]},
+      ]},
+    ]},
+    {kr:'식음료', en:'Food, Beverage & Tobacco', industries:[
+      {kr:'식품', en:'Food Products', companies:[
+        {t:'004370', kr:'농심', en:'Nongshim', desc:'신라면 등을 만드는 국내 대표 라면회사', tags:[]},
+        {t:'271560', kr:'오리온', en:'Orion', desc:'초코파이 등을 만드는 제과회사', tags:[]},
+        {t:'097950', kr:'CJ제일제당', en:'CJ CheilJedang', desc:'가공식품과 바이오 사업을 함께하는 식품회사', tags:[]},
+        {t:'005610', kr:'SPC삼립', en:'SPC Samlip', desc:'삼립빵 등을 만드는 제빵 식품회사', tags:[]},
+        {t:'001680', kr:'대상', en:'Daesang Corporation', desc:'미원 등 조미료·가공식품을 만드는 회사', tags:[]},
+      ]},
+      {kr:'담배', en:'Tobacco', companies:[
+        {t:'033780', kr:'KT&G', en:'KT&G', desc:'국내 담배 시장을 대표하는 담배·인삼 제품 회사', tags:[]},
+      ]},
+    ]},
+  ]},
+  {id:'fin', kr:'금융', en:'Financials', color:'#3D6FA8', etfs:[
+    {t:'091170', kr:'KODEX 은행', en:'KODEX Banks', desc:'국내 주요 은행지주회사에 분산투자하는 ETF'},
+    {t:'139270', kr:'TIGER 200 금융', en:'TIGER 200 Financials', desc:'코스피200 내 금융 섹터 기업에 분산투자하는 ETF'},
+  ], groups:[
+    {kr:'은행', en:'Banks', industries:[
+      {kr:'은행', en:'Banks', companies:[
+        {t:'105560', kr:'KB금융', en:'KB Financial Group', desc:'국내 대표 은행지주회사 중 하나', tags:[]},
+        {t:'055550', kr:'신한지주', en:'Shinhan Financial Group', desc:'신한은행을 산하에 둔 금융지주회사', tags:[]},
+        {t:'086790', kr:'하나금융지주', en:'Hana Financial Group', desc:'하나은행을 산하에 둔 금융지주회사', tags:[]},
+        {t:'316140', kr:'우리금융지주', en:'Woori Financial Group', desc:'우리은행을 산하에 둔 금융지주회사', tags:[]},
+        {t:'138930', kr:'BNK금융지주', en:'BNK Financial Group', desc:'부산은행·경남은행을 산하에 둔 지방 금융지주회사', tags:[]},
+      ]},
+    ]},
+    {kr:'금융서비스', en:'Financial Services', industries:[
+      {kr:'금융서비스', en:'Financial Services', companies:[
+        {t:'006800', kr:'미래에셋증권', en:'Mirae Asset Securities', desc:'국내 대표 대형 증권사', tags:[]},
+        {t:'029780', kr:'삼성카드', en:'Samsung Card', desc:'삼성그룹 계열의 신용카드 회사', tags:[]},
+        {t:'016360', kr:'삼성증권', en:'Samsung Securities', desc:'삼성그룹 계열의 대형 증권사', tags:[]},
+        {t:'039490', kr:'키움증권', en:'Kiwoom Securities', desc:'온라인 리테일 중심의 대형 증권사', tags:[]},
+        {t:'071050', kr:'한국금융지주', en:'Korea Investment Holdings', desc:'한국투자증권을 산하에 둔 금융지주회사', tags:[]},
+      ]},
+    ]},
+    {kr:'보험', en:'Insurance', industries:[
+      {kr:'보험', en:'Insurance', companies:[
+        {t:'032830', kr:'삼성생명', en:'Samsung Life Insurance', desc:'국내 최대 규모의 생명보험 회사', tags:[]},
+        {t:'000810', kr:'삼성화재', en:'Samsung Fire & Marine Insurance', desc:'국내 최대 규모의 손해보험 회사', tags:[]},
+        {t:'138040', kr:'메리츠금융지주', en:'Meritz Financial Group', desc:'메리츠화재를 산하에 둔 보험 금융지주회사', tags:[]},
+        {t:'005830', kr:'DB손해보험', en:'DB Insurance', desc:'국내 대형 손해보험 회사', tags:[]},
+        {t:'001450', kr:'현대해상', en:'Hyundai Marine & Fire Insurance', desc:'국내 대형 손해보험 회사', tags:[]},
+      ]},
+    ]},
+  ]},
+  {id:'health', kr:'헬스케어', en:'Health Care', color:'#B24D6B', etfs:[
+    {t:'143860', kr:'TIGER 헬스케어', en:'TIGER Healthcare', desc:'국내 제약·바이오 기업에 분산투자하는 ETF'},
+  ], groups:[
+    {kr:'제약·바이오·생명과학', en:'Pharmaceuticals, Biotechnology & Life Sciences', industries:[
+      {kr:'생명공학', en:'Biotechnology', companies:[
+        {t:'207940', kr:'삼성바이오로직스', en:'Samsung Biologics', desc:'의약품을 위탁생산(CDMO)하는 바이오 회사', tags:[]},
+        {t:'068270', kr:'셀트리온', en:'Celltrion', desc:'바이오시밀러(복제 바이오의약품)를 개발·생산하는 회사', tags:[]},
+        {t:'328130', kr:'루닛', en:'Lunit', desc:'AI로 의료영상을 분석해 암을 진단하는 의료 AI 회사', tags:['AI소프트웨어'], chains:{ai:'응용·서비스'}},
+        {t:'196170', kr:'알테오젠', en:'Alteogen', desc:'바이오의약품 투여 방식을 바꾸는 원천기술을 보유한 바이오 회사', tags:[]},
+        {t:'141080', kr:'리가켐바이오', en:'LegoChem Biosciences', desc:'항암 신약(ADC)을 개발하는 바이오 회사', tags:[]},
+      ]},
+      {kr:'제약', en:'Pharmaceuticals', companies:[
+        {t:'000100', kr:'유한양행', en:'Yuhan Corporation', desc:'국내 대표 제약회사 중 하나', tags:[]},
+        {t:'128940', kr:'한미약품', en:'Hanmi Pharmaceutical', desc:'신약 개발에 강점이 있는 국내 대표 제약회사', tags:[]},
+        {t:'185750', kr:'종근당', en:'Chong Kun Dang', desc:'국내 대표 전문의약품 제약회사', tags:[]},
+        {t:'001060', kr:'JW중외제약', en:'JW Pharmaceutical', desc:'수액제 등을 만드는 국내 제약회사', tags:[]},
+        {t:'069620', kr:'대웅제약', en:'Daewoong Pharmaceutical', desc:'보툴리눔톡신(나보타) 등을 만드는 제약회사', tags:[]},
+      ]},
+    ]},
+    {kr:'헬스케어 장비·서비스', en:'Health Care Equipment & Services', industries:[
+      {kr:'헬스케어 장비·용품', en:'Health Care Equipment & Supplies', companies:[
+        {t:'048260', kr:'오스템임플란트', en:'Osstem Implant', desc:'치과 임플란트를 만드는 의료기기 회사', tags:[]},
+        {t:'145020', kr:'휴젤', en:'Hugel', desc:'보툴리눔톡신·필러 등 미용 의료제품을 만드는 회사', tags:[]},
+        {t:'214150', kr:'클래시스', en:'Classys', desc:'피부미용 의료기기를 만드는 회사', tags:[]},
+        {t:'099190', kr:'아이센스', en:'i-SENS', desc:'혈당측정기 등 진단 의료기기를 만드는 회사', tags:[]},
+        {t:'064550', kr:'바이오니아', en:'Bioneer', desc:'유전자 진단키트·바이오 소재를 만드는 회사', tags:[]},
+      ]},
+    ]},
+  ]},
+  {id:'ind', kr:'산업재', en:'Industrials', color:'#6B7280', etfs:[
+    {t:'227550', kr:'TIGER 200 산업재', en:'TIGER 200 Industrials', desc:'코스피200 내 산업재 섹터 기업에 분산투자하는 ETF'},
+  ], groups:[
+    {kr:'자본재', en:'Capital Goods', industries:[
+      {kr:'조선·기계', en:'Machinery', companies:[
+        {t:'329180', kr:'HD현대중공업', en:'HD Hyundai Heavy Industries', desc:'선박을 설계·건조하는 국내 대표 조선회사', tags:[]},
+        {t:'034020', kr:'두산에너빌리티', en:'Doosan Enerbility', desc:'발전설비·원전 기자재를 만드는 중공업 회사', tags:['AI인프라'], chains:{nuclear:'기자재·건설'}},
+        {t:'010140', kr:'삼성중공업', en:'Samsung Heavy Industries', desc:'선박·해양플랜트를 만드는 조선회사', tags:[]},
+        {t:'042660', kr:'한화오션', en:'Hanwha Ocean', desc:'상선·잠수함을 건조하는 조선회사', tags:[]},
+        {t:'097230', kr:'HJ중공업', en:'HJ Shipbuilding & Construction', desc:'조선·건설을 함께하는 중공업 회사', tags:[]},
+        {t:'277810', kr:'레인보우로보틱스', en:'Rainbow Robotics', desc:'이족보행 로봇 등을 개발하는 국내 로봇 전문회사(삼성전자가 투자)', tags:['피지컬AI','로봇'], chains:{robot:'로봇 제조'}},
+        {t:'454910', kr:'두산로보틱스', en:'Doosan Robotics', desc:'산업현장에서 쓰이는 협동로봇을 만드는 회사', tags:['피지컬AI','로봇'], chains:{robot:'로봇 제조'}},
+      ]},
+      {kr:'항공우주·방위', en:'Aerospace & Defense', companies:[
+        {t:'012450', kr:'한화에어로스페이스', en:'Hanwha Aerospace', desc:'항공엔진과 방산 무기체계를 만드는 회사', tags:[]},
+        {t:'079550', kr:'LIG넥스원', en:'LIG Nex1', desc:'유도무기 등을 만드는 국내 대표 방산회사', tags:[]},
+        {t:'047810', kr:'한국항공우주산업', en:'Korea Aerospace Industries', desc:'전투기·헬기를 만드는 국내 대표 항공우주 회사', tags:[]},
+        {t:'272210', kr:'한화시스템', en:'Hanwha Systems', desc:'방산 전자체계·레이더를 만드는 회사', tags:[]},
+        {t:'064350', kr:'현대로템', en:'Hyundai Rotem', desc:'전차 등 지상무기체계와 철도차량을 만드는 회사', tags:[]},
+      ]},
+      {kr:'전기장비', en:'Electrical Equipment', companies:[
+        {t:'010120', kr:'LS ELECTRIC', en:'LS Electric', desc:'전력기기·자동화 설비를 만드는 전기장비 회사', tags:['AI인프라']},
+        {t:'267260', kr:'HD현대일렉트릭', en:'HD Hyundai Electric', desc:'AI 데이터센터용 변압기 수요로 주목받는 전력기기 회사', tags:['AI인프라'], chains:{ai:'인프라', nuclear:'기자재·건설'}},
+        {t:'001440', kr:'대한전선', en:'Daehan Cable', desc:'전력케이블을 만드는 전기장비 회사', tags:['AI인프라']},
+        {t:'298040', kr:'효성중공업', en:'Hyosung Heavy Industries', desc:'변압기 등 중전기기를 만드는 회사', tags:['AI인프라']},
+        {t:'103590', kr:'일진전기', en:'Iljin Electric', desc:'전선·변압기를 만드는 전기장비 회사', tags:['AI인프라']},
+      ]},
+    ]},
+    {kr:'운송', en:'Transportation', industries:[
+      {kr:'항공·해운', en:'Airlines & Marine', companies:[
+        {t:'003490', kr:'대한항공', en:'Korean Air', desc:'국내 최대 규모의 항공사', tags:[]},
+        {t:'011200', kr:'HMM', en:'HMM', desc:'컨테이너 해상운송을 전문으로 하는 국내 대표 해운회사', tags:[]},
+        {t:'020560', kr:'아시아나항공', en:'Asiana Airlines', desc:'국내 대형 항공사 중 하나', tags:[]},
+        {t:'180640', kr:'한진칼', en:'Hanjin KAL', desc:'대한항공을 산하에 둔 지주회사', tags:[]},
+        {t:'005880', kr:'대한해운', en:'Korea Line Corporation', desc:'벌크선 해상운송을 전문으로 하는 해운회사', tags:[]},
+      ]},
+    ]},
+  ]},
+  {id:'energy', kr:'에너지', en:'Energy', color:'#A8572C', etfs:[
+    {t:'117460', kr:'KODEX 에너지화학', en:'KODEX Energy & Chemicals', desc:'국내 에너지·화학 대표 기업에 분산투자하는 ETF'},
+    {t:'139250', kr:'TIGER 200 에너지화학', en:'TIGER 200 Energy & Chemicals', desc:'코스피200 내 에너지·화학 섹터 기업에 분산투자하는 ETF'},
+  ], groups:[
+    {kr:'에너지', en:'Energy', industries:[
+      {kr:'석유·가스·연료', en:'Oil, Gas & Consumable Fuels', companies:[
+        {t:'096770', kr:'SK이노베이션', en:'SK Innovation', desc:'정유 사업과 배터리 사업을 함께하는 에너지 회사', tags:[], chains:{battery:'셀 제조'}},
+        {t:'010950', kr:'S-Oil', en:'S-Oil', desc:'원유를 정제해 석유제품을 생산하는 정유회사', tags:[]},
+        {t:'078930', kr:'GS', en:'GS Holdings', desc:'정유·에너지 계열사를 보유한 지주회사', tags:[]},
+      ]},
+    ]},
+  ]},
+  {id:'mat', kr:'소재', en:'Materials', color:'#7C6A46', etfs:[
+    {t:'139240', kr:'TIGER 200 철강소재', en:'TIGER 200 Steel & Materials', desc:'코스피200 내 철강·소재 섹터 기업에 분산투자하는 ETF'},
+  ], groups:[
+    {kr:'소재', en:'Materials', industries:[
+      {kr:'화학', en:'Chemicals', companies:[
+        {t:'051910', kr:'LG화학', en:'LG Chem', desc:'배터리 소재와 석유화학 제품을 함께 생산하는 회사', tags:[], chains:{battery:'소재'}},
+        {t:'011170', kr:'롯데케미칼', en:'Lotte Chemical', desc:'석유화학 기초소재를 생산하는 화학회사', tags:[]},
+        {t:'298000', kr:'효성첨단소재', en:'Hyosung Advanced Materials', desc:'탄소섬유 등 첨단 산업소재를 만드는 회사', tags:[]},
+        {t:'011790', kr:'SKC', en:'SKC', desc:'2차전지 소재(동박)와 화학제품을 만드는 회사', tags:[], chains:{battery:'소재'}},
+        {t:'009830', kr:'한화솔루션', en:'Hanwha Solutions', desc:'화학제품과 태양광 사업을 함께하는 회사', tags:[]},
+        {t:'247540', kr:'에코프로비엠', en:'EcoPro BM', desc:'배터리 양극재를 전문으로 생산하는 소재 회사', tags:[], chains:{battery:'소재'}},
+        {t:'020150', kr:'롯데에너지머티리얼즈', en:'Lotte Energy Materials', desc:'배터리용 동박(일렉포일)을 생산하는 소재 회사', tags:[], chains:{battery:'소재'}},
+      ]},
+      {kr:'금속·광업', en:'Metals & Mining', companies:[
+        {t:'005490', kr:'POSCO홀딩스', en:'POSCO Holdings', desc:'국내 최대 규모의 철강·이차전지 소재 회사', tags:[]},
+        {t:'010130', kr:'고려아연', en:'Korea Zinc', desc:'아연·비철금속을 제련하는 세계적 제련회사', tags:[], chains:{battery:'원재료'}},
+        {t:'004020', kr:'현대제철', en:'Hyundai Steel', desc:'자동차·건설용 철강을 생산하는 회사', tags:[]},
+        {t:'103140', kr:'풍산', en:'Poongsan Corporation', desc:'동(구리) 등 비철금속을 가공하는 회사', tags:[]},
+        {t:'001430', kr:'세아베스틸지주', en:'SeAH Besteel Holdings', desc:'특수강을 생산하는 철강회사', tags:[]},
+      ]},
+    ]},
+  ]},
+  {id:'util', kr:'유틸리티', en:'Utilities', color:'#4B8C8C', etfs:[], groups:[
+    {kr:'유틸리티', en:'Utilities', industries:[
+      {kr:'전력·가스', en:'Electric & Gas Utilities', companies:[
+        {t:'015760', kr:'한국전력', en:'KEPCO', desc:'국내 전력 생산·송배전을 담당하는 공기업', tags:['AI인프라'], chains:{nuclear:'발전·공급'}},
+        {t:'036460', kr:'한국가스공사', en:'Korea Gas Corporation', desc:'국내 천연가스 도입·공급을 담당하는 공기업', tags:[]},
+        {t:'004690', kr:'삼천리', en:'Samchully', desc:'수도권 지역에 도시가스를 공급하는 회사', tags:[]},
+        {t:'071320', kr:'한국지역난방공사', en:'Korea District Heating Corp', desc:'수도권 등에 지역난방을 공급하는 공기업', tags:[]},
+      ]},
+    ]},
+  ]},
+  {id:'re', kr:'부동산', en:'Real Estate', color:'#9C7A3C', etfs:[
+    {t:'329200', kr:'TIGER 리츠부동산인프라', en:'TIGER REITs Real Estate Infra', desc:'국내 리츠·부동산 인프라 자산에 분산투자하는 ETF'},
+  ], groups:[
+    {kr:'리츠(REITs)', en:'Equity Real Estate Investment Trusts', industries:[
+      {kr:'리츠', en:'REITs', companies:[
+        {t:'334890', kr:'롯데리츠', en:'Lotte REIT', desc:'롯데 계열 상업시설에 투자하는 리츠 회사', tags:[]},
+        {t:'365550', kr:'ESR켄달스퀘어리츠', en:'ESR Kendall Square REIT', desc:'물류센터에 투자하는 산업용 리츠 회사', tags:[]},
+        {t:'293940', kr:'신한알파리츠', en:'Shinhan Alpha REIT', desc:'오피스 빌딩에 투자하는 리츠 회사', tags:[]},
+        {t:'088980', kr:'맥쿼리인프라', en:'Macquarie Korea Infrastructure Fund', desc:'도로·항만 등 인프라 자산에 투자하는 펀드', tags:[]},
+        {t:'088260', kr:'이리츠코크렙', en:'E-Reit Kocrep', desc:'이랜드리테일 매장 등 상업시설에 투자하는 리츠 회사', tags:[]},
+      ]},
+    ]},
+  ]},
+];
+
+const THEMES = {
+  ai: {
+    label: '🤖 AI 밸류체인',
+    order: ['하드웨어','인프라','데이터센터','클라우드','AI모델·소프트웨어','응용·서비스','보안','피지컬AI'],
+    labelEn: {
+      '하드웨어':'Hardware', '인프라':'Infrastructure', '데이터센터':'Data Center',
+      '클라우드':'Cloud', 'AI모델·소프트웨어':'AI Model / Software', '응용·서비스':'Applications',
+      '보안':'Security', '피지컬AI':'Physical AI'
+    },
+  },
+  battery: {
+    label: '🔋 2차전지 밸류체인',
+    order: ['원재료','소재','셀 제조','완성차·ESS'],
+    labelEn: {'원재료':'Raw Materials','소재':'Battery Materials','셀 제조':'Cell Manufacturing','완성차·ESS':'EV & ESS'},
+  },
+  robot: {
+    label: '🦾 로봇·피지컬AI 밸류체인',
+    order: ['부품','로봇 제조','응용'],
+    labelEn: {'부품':'Components','로봇 제조':'Robot Manufacturing','응용':'Applications'},
+  },
+  nuclear: {
+    label: '⚛️ 원자력·전력 인프라 밸류체인',
+    order: ['연료','기자재·건설','발전·공급'],
+    labelEn: {'연료':'Fuel','기자재·건설':'Equipment & Construction','발전·공급':'Power Generation & Supply'},
+  },
+};
+
+const MARKETS = {
+  us: {label:'US EQUITIES', data:SECTORS_US},
+  kr: {label:'KR EQUITIES', data:SECTORS_KR},
+};
+
+let activeTags = new Set();
+let currentView = 'sector';
+let currentMarket = 'us';
+let currentTheme = 'ai';
+
+function activeSectors(){
+  return MARKETS[currentMarket].data;
+}
+
+function allCompanies(market){
+  market = market || currentMarket;
+  return MARKETS[market].data.flatMap(s => s.groups.flatMap(g => g.industries.flatMap(ind => ind.companies.map(c =>
+    ({...c, market, sectorId:s.id, sectorKr:s.kr, sectorColor:s.color, groupKr:g.kr, groupEn:g.en, indKr:ind.kr, indEn:ind.en})
+  ))));
+}
+
+function allCompaniesBothMarkets(){
+  return Object.keys(MARKETS).flatMap(m => allCompanies(m));
+}
+
+function tagSourceCompanies(){
+  return currentView === 'sector' ? allCompanies(currentMarket) : allCompaniesBothMarkets();
+}
+
+function buildChainGroups(){
+  const theme = THEMES[currentTheme];
+  const comps = allCompaniesBothMarkets().filter(c => c.chains && c.chains[currentTheme]);
+  const map = {};
+  theme.order.forEach(k => map[k] = []);
+  comps.forEach(c => map[c.chains[currentTheme]].push(c));
+  return theme.order.filter(k => map[k].length).map(k => ({
+    id:'chain-'+k, kr:k, en:theme.labelEn[k], color:'#1f6f5c', companies:map[k]
+  }));
+}
+
+function allTags(){
+  const counts = {};
+  tagSourceCompanies().forEach(c => c.tags.forEach(t => counts[t] = (counts[t]||0)+1));
+  return Object.entries(counts).sort((a,b)=> b[1]-a[1]);
+}
+
+function renderChips(){
+  const row = document.getElementById('chipRow');
+  row.innerHTML = '';
+  allTags().forEach(([tag,count]) => {
+    const btn = document.createElement('button');
+    btn.className = 'chip' + (activeTags.has(tag) ? ' active' : '');
+    btn.type = 'button';
+    btn.innerHTML = '#'+tag+' <span class="count">'+count+'</span>';
+    btn.addEventListener('click', () => {
+      if(activeTags.has(tag)) activeTags.delete(tag); else activeTags.add(tag);
+      renderChips();
+      renderGroups(false);
+    });
+    row.appendChild(btn);
+  });
+}
+
+function stockCard(c){
+  const dim = activeTags.size > 0 && !c.tags.some(t => activeTags.has(t));
+  const div = document.createElement('div');
+  div.className = 'stock' + (dim ? ' dim' : '') + (c.userAdded ? ' user-added' : '');
+  const tagsHtml = c.tags.map(t => '<span class="tag'+(activeTags.has(t)?' hit':'')+'">#'+t+'</span>').join('');
+  const showMarket = currentView !== 'sector' && c.market;
+  const marketHtml = showMarket ? `<span class="market-badge">${c.market === 'us' ? '미국' : '한국'}</span>` : '';
+  div.innerHTML = `
+    <div class="stock-top">
+      <span class="ticker mono">${c.t}</span>
+      <span class="stock-name">${c.kr} <span class="en">${c.en||''}</span></span>
+      ${marketHtml}
+      ${c.userAdded ? '<span class="user-badge">내 추가</span><button type="button" class="stock-remove" title="삭제">✕</button>' : ''}
+    </div>
+    <p class="stock-desc">${c.desc}</p>
+    ${tagsHtml ? `<div class="tag-row">${tagsHtml}</div>` : ''}
+  `;
+  if(c.userAdded){
+    div.querySelector('.stock-remove').addEventListener('click', () => removeUserAddition(c._addedId));
+  }
+  return div;
+}
+
+function etfCard(e){
+  const div = document.createElement('div');
+  div.className = 'etf-card';
+  div.innerHTML = `
+    <div class="etf-top">
+      <span class="etf-badge">ETF</span>
+      <span class="etf-ticker mono">${e.t}</span>
+    </div>
+    <div class="etf-name">${e.kr} <span class="mono">${e.en}</span></div>
+    <p class="etf-desc">${e.desc}</p>
+  `;
+  return div;
+}
+
+function etfSectionEl(etfs){
+  const section = document.createElement('div');
+  section.className = 'etf-section';
+
+  const head = document.createElement('button');
+  head.type = 'button';
+  head.className = 'etf-head';
+  head.innerHTML = `
+    <span class="etf-heading">🧺 이 섹터에 투자하는 ETF</span>
+    <span class="etf-count mono">${etfs.length}</span>
+    <svg class="chev" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  `;
+  head.addEventListener('click', () => section.classList.toggle('open'));
+
+  const body = document.createElement('div');
+  body.className = 'etf-body';
+  const inner = document.createElement('div');
+  inner.className = 'etf-body-inner';
+  const list = document.createElement('div');
+  list.className = 'etf-list';
+  etfs.forEach(e => list.appendChild(etfCard(e)));
+  inner.appendChild(list);
+  body.appendChild(inner);
+
+  section.appendChild(head);
+  section.appendChild(body);
+  return section;
+}
+
+function industryEl(ind){
+  const wrap = document.createElement('div');
+  wrap.className = 'industry';
+
+  const head = document.createElement('button');
+  head.type = 'button';
+  head.className = 'industry-head';
+  head.innerHTML = `
+    <span class="industry-name">${ind.kr} <span class="en">${ind.en}</span></span>
+    <span class="industry-count mono">${ind.companies.length}</span>
+    <svg class="chev" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  `;
+  head.addEventListener('click', () => wrap.classList.toggle('open'));
+
+  const body = document.createElement('div');
+  body.className = 'industry-body';
+  const inner = document.createElement('div');
+  inner.className = 'industry-body-inner';
+  const stocks = document.createElement('div');
+  stocks.className = 'stocks';
+  ind.companies.forEach(c => stocks.appendChild(stockCard(c)));
+  inner.appendChild(stocks);
+  body.appendChild(inner);
+
+  wrap.appendChild(head);
+  wrap.appendChild(body);
+  return wrap;
+}
+
+function subgroupEl(sub, sectorColor){
+  const wrap = document.createElement('div');
+  wrap.className = 'subgroup';
+
+  const count = sub.industries.reduce((n,ind)=> n+ind.companies.length, 0);
+
+  const head = document.createElement('button');
+  head.type = 'button';
+  head.className = 'subgroup-head';
+  head.innerHTML = `
+    <span class="subgroup-bar" style="--dot-color:${sectorColor}"></span>
+    <span class="subgroup-name">${sub.kr}<span class="en">${sub.en}</span></span>
+    <span class="subgroup-count mono">${count}</span>
+    <svg class="chev" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  `;
+  head.addEventListener('click', () => wrap.classList.toggle('open'));
+
+  const body = document.createElement('div');
+  body.className = 'subgroup-body';
+  const inner = document.createElement('div');
+  inner.className = 'subgroup-body-inner';
+
+  sub.industries.forEach(ind => inner.appendChild(industryEl(ind)));
+
+  body.appendChild(inner);
+  wrap.appendChild(head);
+  wrap.appendChild(body);
+  return wrap;
+}
+
+function groupEl(group, openDefault, nested){
+  const wrap = document.createElement('div');
+  wrap.className = 'group' + (openDefault ? ' open' : '');
+
+  const count = nested
+    ? group.groups.reduce((n,g)=> n + g.industries.reduce((m,ind)=> m+ind.companies.length, 0), 0)
+    : group.companies.length;
+
+  const head = document.createElement('button');
+  head.type = 'button';
+  head.className = 'group-head';
+  head.innerHTML = `
+    <span class="dot" style="--dot-color:${group.color}"></span>
+    <span class="group-name">${group.kr}<span class="en">${group.en}</span></span>
+    <span class="group-count mono">${count}</span>
+    <svg class="chev" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  `;
+  head.addEventListener('click', () => {
+    wrap.classList.toggle('open');
+  });
+
+  const body = document.createElement('div');
+  body.className = 'group-body';
+  const inner = document.createElement('div');
+  inner.className = 'group-body-inner';
+
+  if(nested){
+    group.groups.forEach(sub => inner.appendChild(subgroupEl(sub, group.color)));
+    if(group.etfs && group.etfs.length) inner.appendChild(etfSectionEl(group.etfs));
+  } else {
+    const stocks = document.createElement('div');
+    stocks.className = 'stocks';
+    group.companies.forEach(c => stocks.appendChild(stockCard(c)));
+    inner.appendChild(stocks);
+  }
+  body.appendChild(inner);
+
+  wrap.appendChild(head);
+  wrap.appendChild(body);
+  return wrap;
+}
+
+function renderGroups(resetOpen){
+  const container = document.getElementById('groups');
+  container.innerHTML = '';
+  const nested = currentView === 'sector';
+  const groups = nested ? activeSectors() : buildChainGroups();
+  groups.forEach((g, i) => {
+    container.appendChild(groupEl(g, resetOpen ? i === 0 : false, nested));
+  });
+}
+
+/* ---- user-added stocks: form + localStorage persistence ---- */
+const STORAGE_KEY = 'sectorCompass_userAdded_v1';
+
+function uid(){ return 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+function readStore(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+
+function writeStore(list){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }catch(e){}
+}
+
+function findOrCreateGroup(sector, groupKr, groupEn){
+  let g = sector.groups.find(x => x.kr === groupKr);
+  if(!g){
+    g = {kr: groupKr, en: groupEn || groupKr, industries:[]};
+    sector.groups.push(g);
+  }
+  return g;
+}
+
+function findOrCreateIndustry(group, indKr, indEn){
+  let ind = group.industries.find(x => x.kr === indKr);
+  if(!ind){
+    ind = {kr: indKr, en: indEn || indKr, companies:[]};
+    group.industries.push(ind);
+  }
+  return ind;
+}
+
+function applyAddition(record){
+  const sectors = MARKETS[record.market].data;
+  const sector = sectors.find(s => s.id === record.sectorId);
+  if(!sector) return;
+  const group = findOrCreateGroup(sector, record.groupKr, record.groupEn);
+  const industry = findOrCreateIndustry(group, record.indKr, record.indEn);
+  industry.companies.push({...record.company, userAdded:true, _addedId:record.id});
+}
+
+function loadStoredAdditions(){
+  readStore().forEach(applyAddition);
+}
+
+function removeUserAddition(id){
+  const list = readStore().filter(r => r.id !== id);
+  writeStore(list);
+  // easiest correct way to reflect a removal: rebuild both markets from scratch, then reapply remaining additions
+  location.reload();
+}
+
+function populateSectorOptions(){
+  const sel = document.getElementById('fSector');
+  const sectors = activeSectors();
+  sel.innerHTML = sectors.map(s => `<option value="${s.id}">${s.kr}</option>`).join('');
+  populateGroupOptions();
+}
+
+function populateGroupOptions(){
+  const sel = document.getElementById('fGroup');
+  const sectors = activeSectors();
+  const sector = sectors.find(s => s.id === document.getElementById('fSector').value) || sectors[0];
+  const opts = sector ? sector.groups.map(g => `<option value="${g.kr}">${g.kr}</option>`).join('') : '';
+  sel.innerHTML = opts + '<option value="__custom__">+ 새 산업군 직접 입력</option>';
+  toggleCustomWrap('fGroup', 'fGroupCustomWrap');
+  populateIndustryOptions();
+}
+
+function populateIndustryOptions(){
+  const sel = document.getElementById('fIndustry');
+  const sectors = activeSectors();
+  const sector = sectors.find(s => s.id === document.getElementById('fSector').value) || sectors[0];
+  const groupVal = document.getElementById('fGroup').value;
+  const group = sector ? sector.groups.find(g => g.kr === groupVal) : null;
+  const opts = group ? group.industries.map(ind => `<option value="${ind.kr}">${ind.kr}</option>`).join('') : '';
+  sel.innerHTML = opts + '<option value="__custom__">+ 새 소분류 직접 입력</option>';
+  toggleCustomWrap('fIndustry', 'fIndustryCustomWrap');
+}
+
+function toggleCustomWrap(selectId, wrapId){
+  const isCustom = document.getElementById(selectId).value === '__custom__';
+  document.getElementById(wrapId).hidden = !isCustom;
+}
+
+function populateChainOptions(){
+  const sel = document.getElementById('fChain');
+  sel.innerHTML = '<option value="">해당 없음</option>' +
+    THEMES.ai.order.map(k => `<option value="${k}">${k}</option>`).join('');
+}
+
+document.getElementById('addToggle').addEventListener('click', () => {
+  const panel = document.getElementById('addPanel');
+  const opening = panel.hidden;
+  panel.hidden = !opening;
+  document.getElementById('addToggle').setAttribute('aria-expanded', String(opening));
+  if(opening){
+    document.getElementById('addMarketLabel').textContent = currentMarket === 'us' ? '미국' : '한국';
+    populateSectorOptions();
+  }
+});
+
+document.getElementById('fSector').addEventListener('change', populateGroupOptions);
+document.getElementById('fGroup').addEventListener('change', () => {
+  toggleCustomWrap('fGroup', 'fGroupCustomWrap');
+  populateIndustryOptions();
+});
+document.getElementById('fIndustry').addEventListener('change', () => {
+  toggleCustomWrap('fIndustry', 'fIndustryCustomWrap');
+});
+
+document.getElementById('addPanel').addEventListener('submit', (ev) => {
+  ev.preventDefault();
+  const msg = document.getElementById('addMsg');
+  const ticker = document.getElementById('fTicker').value.trim();
+  const kr = document.getElementById('fKr').value.trim();
+  const en = document.getElementById('fEn').value.trim();
+  const desc = document.getElementById('fDesc').value.trim();
+  const sectorId = document.getElementById('fSector').value;
+  const groupSel = document.getElementById('fGroup').value;
+  const groupKr = groupSel === '__custom__' ? document.getElementById('fGroupCustom').value.trim() : groupSel;
+  const indSel = document.getElementById('fIndustry').value;
+  const indKr = indSel === '__custom__' ? document.getElementById('fIndustryCustom').value.trim() : indSel;
+  const chain = document.getElementById('fChain').value;
+  const tags = document.getElementById('fTags').value.split(',').map(t => t.trim()).filter(Boolean);
+
+  if(!ticker || !kr || !desc || !groupKr || !indKr){
+    msg.textContent = '티커·국문명·산업군·소분류·설명은 필수예요.';
+    msg.className = 'add-msg error';
+    return;
+  }
+
+  const sector = activeSectors().find(s => s.id === sectorId);
+  const record = {
+    id: uid(),
+    market: currentMarket,
+    sectorId,
+    groupKr, groupEn: groupKr,
+    indKr, indEn: indKr,
+    company: {t:ticker, kr, en, desc, tags, chains: chain ? {ai: chain} : undefined},
+  };
+
+  const list = readStore();
+  list.push(record);
+  writeStore(list);
+  applyAddition(record);
+
+  msg.textContent = `${kr} 추가 완료 — ${sector ? sector.kr : ''} > ${groupKr} > ${indKr}`;
+  msg.className = 'add-msg';
+  document.getElementById('addPanel').reset();
+  populateSectorOptions();
+  renderChips();
+  renderGroups(false);
+});
+
+function setActiveInGroup(container, activeBtn){
+  container.querySelectorAll('button').forEach(b => {
+    const isActive = b === activeBtn;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-selected', String(isActive));
+  });
+}
+
+document.querySelectorAll('#topTabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    setActiveInGroup(document.getElementById('topTabs'), btn);
+
+    if(btn.dataset.market){
+      currentMarket = btn.dataset.market;
+      currentView = 'sector';
+      document.getElementById('themeSubTabs').hidden = true;
+      activeTags = new Set();
+      document.getElementById('eyebrow').textContent = 'SECTOR COMPASS · ' + MARKETS[currentMarket].label;
+      renderChips();
+      renderGroups(true);
+      if(!document.getElementById('addPanel').hidden){
+        document.getElementById('addMarketLabel').textContent = currentMarket === 'us' ? '미국' : '한국';
+        populateSectorOptions();
+      }
+    } else if(btn.dataset.mode === 'theme'){
+      currentView = 'chain';
+      document.getElementById('themeSubTabs').hidden = false;
+      activeTags = new Set();
+      renderChips();
+      renderGroups(true);
+    }
+  });
+});
+
+document.getElementById('themeFilterToggle').addEventListener('click', () => {
+  const btn = document.getElementById('themeFilterToggle');
+  const row = document.getElementById('chipRow');
+  const opening = row.hidden;
+  row.hidden = !opening;
+  btn.classList.toggle('open', opening);
+  btn.setAttribute('aria-expanded', String(opening));
+});
+
+document.querySelectorAll('#themeSubTabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    setActiveInGroup(document.getElementById('themeSubTabs'), btn);
+    currentTheme = btn.dataset.theme;
+    currentView = 'chain';
+    renderGroups(true);
+  });
+});
+
+loadStoredAdditions();
+populateChainOptions();
+renderChips();
+renderGroups(true);
+</script>
+
+</body>
+</html>
